@@ -1,0 +1,2 @@
+module TextSamplesHelper
+end

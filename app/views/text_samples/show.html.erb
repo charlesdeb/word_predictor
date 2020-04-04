@@ -1,0 +1,14 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Description:</strong>
+  <%= @text_sample.description %>
+</p>
+
+<p>
+  <strong>Text:</strong>
+  <%= @text_sample.text %>
+</p>
+
+<%= link_to 'Edit', edit_text_sample_path(@text_sample) %> |
+<%= link_to 'Back', text_samples_path %>

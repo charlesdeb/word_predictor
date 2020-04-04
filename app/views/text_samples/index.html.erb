@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Text Samples</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Text</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @text_samples.each do |text_sample| %>
+      <tr>
+        <td><%= text_sample.description %></td>
+        <td><%= text_sample.text %></td>
+        <td><%= link_to 'Show', text_sample %></td>
+        <td><%= link_to 'Edit', edit_text_sample_path(text_sample) %></td>
+        <td><%= link_to 'Destroy', text_sample, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Text Sample', new_text_sample_path %>

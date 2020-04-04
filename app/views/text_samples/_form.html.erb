@@ -1,0 +1,27 @@
+<%= form_with(model: text_sample, local: true) do |form| %>
+  <% if text_sample.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(text_sample.errors.count, "error") %> prohibited this text_sample from being saved:</h2>
+
+      <ul>
+        <% text_sample.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :description %>
+    <%= form.text_field :description %>
+  </div>
+
+  <div class="field">
+    <%= form.label :text %>
+    <%= form.text_area :text %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit %>
+  </div>
+<% end %>

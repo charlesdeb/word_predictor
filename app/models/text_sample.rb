@@ -1,0 +1,2 @@
+class TextSample < ApplicationRecord
+end

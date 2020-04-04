@@ -16,11 +16,11 @@ RSpec.describe "/text_samples", type: :request do
   # TextSample. As you add validations to TextSample, be sure to
   # adjust the attributes here as well.
   let(:valid_attributes) {
-    skip("Add a hash of attributes valid for your model")
+    {description: 'Something here', text: 'Lots more text'}
   }
 
   let(:invalid_attributes) {
-    skip("Add a hash of attributes invalid for your model")
+    {description: '', text: ''}
   }
 
   describe "GET /index" do
@@ -62,6 +62,12 @@ RSpec.describe "/text_samples", type: :request do
         }.to change(TextSample, :count).by(1)
       end
 
+      it "builds new WordChunk records" do
+        expect {
+          post text_samples_url, params: { text_sample: valid_attributes }
+        }.to change(WordChunk, :count).by(10)
+      end
+
       it "redirects to the created text_sample" do
         post text_samples_url, params: { text_sample: valid_attributes }
         expect(response).to redirect_to(text_sample_url(TextSample.last))
@@ -85,7 +91,7 @@ RSpec.describe "/text_samples", type: :request do
   describe "PATCH /update" do
     context "with valid parameters" do
       let(:new_attributes) {
-        skip("Add a hash of attributes valid for your model")
+        {description: 'Something new here', text: 'Lots more changed text'}
       }
 
       it "updates the requested text_sample" do

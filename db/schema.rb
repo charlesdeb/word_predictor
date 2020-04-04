@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_04_210959) do
+ActiveRecord::Schema.define(version: 2020_04_04_224043) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -22,4 +22,17 @@ ActiveRecord::Schema.define(version: 2020_04_04_210959) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "word_chunks", force: :cascade do |t|
+    t.string "text", null: false
+    t.integer "size", null: false
+    t.integer "count", null: false
+    t.bigint "text_sample_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["size"], name: "index_word_chunks_on_size"
+    t.index ["text"], name: "index_word_chunks_on_text"
+    t.index ["text_sample_id"], name: "index_word_chunks_on_text_sample_id"
+  end
+
+  add_foreign_key "word_chunks", "text_samples"
 end

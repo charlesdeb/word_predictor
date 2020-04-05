@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WordChunk < ApplicationRecord
   belongs_to :text_sample
 

@@ -25,6 +25,7 @@
 
 # application specific
 database.yml
+examples.txt
 
 /public/packs
 /public/packs-test

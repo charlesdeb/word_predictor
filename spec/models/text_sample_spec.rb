@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-# require 'word_chunk'
 
 RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
   describe 'validations' do
@@ -66,6 +65,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
         )
       end
     end
+
     context '3 letter text sample, chunk size of 2' do
       let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
       let(:chunk_hash) { { 'an' => 1, 'nt' => 1 } }
@@ -95,10 +95,33 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  # description '#build_chunk_hash' do
-  # needs to create an empty hash with defauly count of 0
-  # needs to iterate through the text one character at a time grabbing chunks of the specified size
-  #   for each chunk, it either adds it to the hash or increments the count
-  # returns the hash
-  # end
+  describe '#build_chunk_hash' do
+    context '2 letter text sample, chunk size of 2' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
+      it 'builds hash' do
+        expect(text_sample.build_chunk_hash(2)).to eq({ 'at' => 1 })
+      end
+    end
+
+    context '3 letter text sample, chunk size of 2' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
+      it 'builds hash' do
+        expect(text_sample.build_chunk_hash(2)).to eq({ 'an' => 1, 'nt' => 1 })
+      end
+    end
+
+    context '3 letter text sample, chunk size of 2, repeating chunks' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaa') }
+      it 'builds hash' do
+        expect(text_sample.build_chunk_hash(2)).to eq({ 'aa' => 2 })
+      end
+    end
+
+    context '4 letter text sample, chunk size of 2, repeating chunks' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaab') }
+      it 'builds hash' do
+        expect(text_sample.build_chunk_hash(2)).to eq({ 'aa' => 2, 'ab' => 1 })
+      end
+    end
+  end
 end

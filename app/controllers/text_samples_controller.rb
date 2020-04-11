@@ -26,10 +26,15 @@ class TextSamplesController < ApplicationController
 
   # POST /text_samples
   # POST /text_samples.json
-  def create
+  def create # rubocop:disable Metrics/MethodLength
     @text_sample = TextSample.new(text_sample_params)
     respond_to do |format|
       if @text_sample.save
+        # TODO: it may be better to have the model call this with a callback -
+        # or maybe it's better to do it explicitly
+        # https://guides.rubyonrails.org/active_record_callbacks.html
+        @text_sample.build_word_chunks
+
         format.html { redirect_to @text_sample, notice: 'Text sample was successfully created.' }
         format.json { render :show, status: :created, location: @text_sample }
       else

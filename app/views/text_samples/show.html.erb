@@ -10,7 +10,7 @@
   </div>
   <div class="col">
     <h2>Generate</h2>
-    <%= form_with(url: generate_text_sample_path, method: "get") do %>
+    <%= form_with(url: url_for([:generate, @text_sample]), method: "get") do %>
       <div class="form-group row">
         <%= label_tag(:output_size, "Output size", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">

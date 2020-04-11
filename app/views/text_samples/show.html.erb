@@ -1,14 +1,29 @@
-<p id="notice"><%= notice %></p>
-
-<p>
-  <strong>Description:</strong>
-  <%= @text_sample.description %>
-</p>
-
-<p>
-  <strong>Text:</strong>
-  <%= @text_sample.text %>
-</p>
-
-<%= link_to 'Edit', edit_text_sample_path(@text_sample) %> |
-<%= link_to 'Back', text_samples_path %>
+<h1>Text Sample: <%= @text_sample.description %></h1>
+<div class="row">
+  <div class="col">
+    <%= text_area_tag("text", @text_sample.text, disabled: true, size: "50x10", class: "form-control") %>
+    <div>
+      <%= link_to "Edit", edit_text_sample_path(@text_sample) %> |
+      <%= link_to "Back", text_samples_path %>
+    </div>
+    <h2>Stats</h2>
+  </div>
+  <div class="col">
+    <h2>Generate</h2>
+    <%= form_with(url: generate_text_sample_path, method: "get") do %>
+      <div class="form-group row">
+        <%= label_tag(:output_size, "Output size", class: "col-sm-3 col-form-label") %>
+        <div class="col-sm-9">
+          <%= text_field_tag(:output_size,nil, class: "form-control") %>
+        </div>
+      </div>
+      <div class="form-group row">
+        <%= label_tag(:chunk_size, "Chunk size", class: "col-sm-3 col-form-label") %>
+        <div class="col-sm-9">
+          <%= text_field_tag(:chunk_size,nil,class: "form-control") %>
+        </div>
+      </div>
+      <%= submit_tag("Generate", class: "btn btn-primary float-right") %>
+    <% end %>
+  </div>
+</div>

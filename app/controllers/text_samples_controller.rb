@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 class TextSamplesController < ApplicationController
-  before_action :set_text_sample, only: [:show, :edit, :update, :destroy]
+  before_action :set_text_sample, only: %i[show edit update destroy]
 
   # GET /text_samples
   # GET /text_samples.json
@@ -9,8 +11,7 @@ class TextSamplesController < ApplicationController
 
   # GET /text_samples/1
   # GET /text_samples/1.json
-  def show
-  end
+  def show; end
 
   # GET /text_samples/new
   def new
@@ -18,14 +19,15 @@ class TextSamplesController < ApplicationController
   end
 
   # GET /text_samples/1/edit
-  def edit
-  end
+  def edit; end
+
+  # GET /text_samples/1/generate
+  def generate; end
 
   # POST /text_samples
   # POST /text_samples.json
   def create
     @text_sample = TextSample.new(text_sample_params)
-
     respond_to do |format|
       if @text_sample.save
         format.html { redirect_to @text_sample, notice: 'Text sample was successfully created.' }
@@ -62,13 +64,14 @@ class TextSamplesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_text_sample
-      @text_sample = TextSample.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def text_sample_params
-      params.require(:text_sample).permit(:description, :text)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_text_sample
+    @text_sample = TextSample.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def text_sample_params
+    params.require(:text_sample).permit(:description, :text)
+  end
 end

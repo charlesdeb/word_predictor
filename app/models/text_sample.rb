@@ -84,17 +84,17 @@ class TextSample < ApplicationRecord
   end
 
   def generate_text(chunk_size, output_size)
-    # next_word_chunk = choose_starting_word_chunk(chunk_size)
+    next_word_chunk = choose_starting_word_chunk(chunk_size)
 
-    # output = next_word_chunk.text
-    # while output.size < output_size
-    #   next_character = next_word_chunk.select_next_character
-    #   output += next_character
-    #   next_word_chunk = WordChunk
-    #                     .find_next_chunk(next_word_chunk, next_character)
-    # end
+    output = next_word_chunk.text
+    while output.size < output_size
+      next_character = next_word_chunk.select_next_character
+      output += next_character
+      next_word_chunk = WordChunk
+                        .find_next_chunk(next_word_chunk, next_character)
+    end
 
-    # output
+    output
   end
 
   def chunks_built?

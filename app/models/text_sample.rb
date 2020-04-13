@@ -77,21 +77,24 @@ class TextSample < ApplicationRecord
       return { message: 'Word chunks have not been built for this text sample' }
     end
 
-    chunk_size = params[:chunk_size] || DEFAULT_CHUNK_SIZE
-    output_size = params[:output_size] || DEFAULT_OUTPUT_SIZE
+    chunk_size =
+      params[:chunk_size].to_i.zero? ? DEFAULT_CHUNK_SIZE : params[:chunk_size].to_i
+    output_size =
+      params[:output_size].to_i.zero? ? DEFAULT_OUTPUT_SIZE : params[:output_size].to_i
 
-    { text: generate_text(chunk_size, output_size) }
+    {
+      text: generate_text(chunk_size, output_size)
+    }
   end
 
   def generate_text(chunk_size, output_size)
-    next_word_chunk = choose_starting_word_chunk(chunk_size)
+    word_chunk = choose_starting_word_chunk(chunk_size)
 
-    output = next_word_chunk.text
+    output = word_chunk.text
     while output.size < output_size
-      next_character = next_word_chunk.select_next_character
+      next_character = word_chunk.select_next_character
       output += next_character
-      next_word_chunk = WordChunk
-                        .find_next_chunk(next_word_chunk, next_character)
+      word_chunk = word_chunk.find_next_chunk(next_character)
     end
 
     output

@@ -190,7 +190,7 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
       end
 
       it 'assigns the generated text' do
-        expect(assigns(:generation_result)).to eq(generation_result)
+        expect(assigns(:generated_text)).to eq(generated_text)
       end
     end
   end

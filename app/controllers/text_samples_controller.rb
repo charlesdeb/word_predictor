@@ -23,10 +23,12 @@ class TextSamplesController < ApplicationController
 
   # GET /text_samples/1/generate
   def generate
-    @generation_result = @text_sample.generate generate_params
+    generation_result = @text_sample.generate generate_params
 
-    if @generation_result[:message]
-      flash.now[:notice] = @generation_result[:message]
+    if generation_result[:message]
+      flash.now[:notice] = generation_result[:message]
+    else
+      @generated_text = generation_result[:text]
     end
 
     # TODO: change the form_with in the show so that it submits via AJAX. This

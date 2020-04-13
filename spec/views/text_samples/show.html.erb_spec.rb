@@ -24,7 +24,7 @@ RSpec.describe 'text_samples/show', type: :view do
     allow(@text_sample)
       .to receive(:generate)
       .and_return({ text: 'The rain in Spain' })
-    @generated_text = @text_sample.generate generate_params
+    @generated_text = @text_sample.generate(generate_params)[:text]
 
     render
 

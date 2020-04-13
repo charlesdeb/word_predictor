@@ -7,5 +7,9 @@ class WordChunk < ApplicationRecord
   validates :size, presence: true
   validates :count, presence: true
 
-  def self.find_next_chunk(word_chunk, next_character); end
+  def find_next_chunk(next_character); end
+
+  def select_next_character
+    'a'
+  end
 end

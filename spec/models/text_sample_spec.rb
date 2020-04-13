@@ -326,7 +326,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     before(:each) do
       allow(word_chunk).to receive(:text).and_return('abc')
       allow(word_chunk).to receive(:select_next_character).and_return('a')
-      allow(WordChunk).to receive(:find_next_chunk).and_return(word_chunk)
+      allow(word_chunk).to receive(:find_next_chunk).and_return(word_chunk)
       allow(text_sample)
         .to receive(:choose_starting_word_chunk).and_return(word_chunk)
     end
@@ -345,7 +345,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       expect(word_chunk)
         .to(have_received(:select_next_character).twice)
 
-      expect(WordChunk)
+      expect(word_chunk)
         .to(have_received(:find_next_chunk).twice)
     end
 
@@ -354,7 +354,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#choose_starting_word_chunk' do # rubocop:disable Metrics/BlockLength
+  describe '#choose_starting_word_chunk' do
     let(:chunk_size) { 3 }
     let(:text_sample) do
       TextSample.create!(description: 'Stuff', text: 'mice')
@@ -362,15 +362,6 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
 
     before(:each) do
       text_sample.build_word_chunks_of_size(chunk_size)
-    end
-
-    it 'selects candidates' do
-      allow(WordChunk).to receive(:find_by)
-      text_sample.choose_starting_word_chunk chunk_size
-
-      expect(WordChunk)
-        .to have_received(:find_by)
-        .with({ text_sample_id: text_sample.id, size: chunk_size })
     end
 
     it 'all WordChunks are potential candidates' do

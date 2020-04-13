@@ -239,7 +239,52 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#generate_text' do
-    it ''
+  describe '#generate_text' do # rubocop:disable Metrics/BlockLength
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+
+    let(:chunk_size) { 3 }
+    let(:output_size) { 5 }
+    let(:generate_params) do
+      { chunk_size: chunk_size, output_size: output_size }
+    end
+
+    context 'parameters provided' do
+      let(:word_chunk) { double('WordChunk') }
+
+      before(:each) do
+        allow(word_chunk).to receive(:text).and_return('abc')
+        allow(word_chunk).to receive(:select_next_character).and_return('a')
+        allow(WordChunk).to receive(:find_next_chunk).and_return(word_chunk)
+        allow(text_sample)
+          .to receive(:choose_starting_word_chunk).and_return(word_chunk)
+      end
+
+      it 'chooses a starting chunk' do
+        text_sample.generate_text generate_params
+
+        expect(text_sample)
+          .to(have_received(:choose_starting_word_chunk)
+          .with(chunk_size))
+      end
+
+      it 'generates the right number of extra characters' do
+        text_sample.generate_text generate_params
+
+        expect(word_chunk)
+          .to(have_received(:select_next_character).twice)
+
+        expect(WordChunk)
+          .to(have_received(:find_next_chunk).twice)
+      end
+
+      it 'returns the right length of output text' do
+        expect(text_sample.generate_text(generate_params).size).to eq(5)
+      end
+    end
+
+    context 'parameters not provided' do
+    end
   end
 end

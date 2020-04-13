@@ -69,8 +69,21 @@ class TextSample < ApplicationRecord
     end
   end
 
-  def generate_text(_generate_params)
-    puts 'in generate_text'
-    'Allk glgf ldfjg ldfkj gdflgdfj lgdfk '
+  def generate_text(generate_params) # rubocop:disable Metrics/MethodLength
+    chunk_size = generate_params[:chunk_size]
+    output_size = generate_params[:output_size]
+    next_word_chunk = choose_starting_word_chunk(chunk_size)
+
+    output = next_word_chunk.text
+    while output.size < output_size
+      next_character = next_word_chunk.select_next_character
+      output += next_character
+      next_word_chunk = WordChunk
+                        .find_next_chunk(next_word_chunk, next_character)
+    end
+
+    output_size
   end
+
+  def choose_starting_word_chunk(chunk_size); end
 end

@@ -81,7 +81,9 @@ class TextSample < ApplicationRecord
     output_size = params[:output_size] || DEFAULT_OUTPUT_SIZE
 
     { text: generate_text(chunk_size, output_size) }
+  end
 
+  def generate_text(chunk_size, output_size)
     # next_word_chunk = choose_starting_word_chunk(chunk_size)
 
     # output = next_word_chunk.text
@@ -95,10 +97,8 @@ class TextSample < ApplicationRecord
     # output
   end
 
-  def generate_text(chunk_size, output_size) end
-
   def chunks_built?
-    puts 'in chunks_built?'
+    !WordChunk.find_by(text_sample_id: id).nil?
   end
 
   def choose_starting_word_chunk(chunk_size); end

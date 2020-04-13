@@ -336,6 +336,21 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
   #   end
   # end
 
+  describe '#chunks_built?' do
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+
+    it 'returns true if WordChunks have been built for this text_sample' do
+      text_sample.build_word_chunks
+      expect(text_sample.chunks_built?).to eq(true)
+    end
+
+    it 'returns false if WordChunks have not been built for this text_sample' do
+      expect(text_sample.chunks_built?).to eq(false)
+    end
+  end
+
   describe '#choose_starting_word_chunk' do
     it ''
   end

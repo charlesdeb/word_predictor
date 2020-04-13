@@ -58,14 +58,17 @@ class TextSamplesController < ApplicationController
 
   # PATCH/PUT /text_samples/1
   # PATCH/PUT /text_samples/1.json
-  def update
+  def update # rubocop:disable Metrics/MethodLength
     respond_to do |format|
       if @text_sample.update(text_sample_params)
         format.html { redirect_to @text_sample, notice: 'Text sample was successfully updated.' }
         format.json { render :show, status: :ok, location: @text_sample }
       else
         format.html { render :edit }
-        format.json { render json: @text_sample.errors, status: :unprocessable_entity }
+        format.json do
+          render json: @text_sample.errors,
+                 status: :unprocessable_entity
+        end
       end
     end
   end
@@ -75,7 +78,10 @@ class TextSamplesController < ApplicationController
   def destroy
     @text_sample.destroy
     respond_to do |format|
-      format.html { redirect_to text_samples_url, notice: 'Text sample was successfully destroyed.' }
+      format.html do
+        redirect_to text_samples_url,
+                    notice: 'Text sample was successfully destroyed.'
+      end
       format.json { head :no_content }
     end
   end
@@ -94,6 +100,6 @@ class TextSamplesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def generate_params
-    params.permit(:chunk_size, :output_size)
+    params.permit(:chunk_size, :output_size, :id)
   end
 end

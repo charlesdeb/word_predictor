@@ -92,7 +92,7 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
     end
   end
 
-  describe 'PATCH /update' do
+  describe 'PATCH /update' do # rubocop:disable Metrics/BlockLength
     context 'with valid parameters' do
       let(:new_attributes) do
         { description: 'Something new here', text: 'Lots more changed text' }
@@ -100,7 +100,9 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
 
       it 'updates the requested text_sample' do
         text_sample = TextSample.create! valid_attributes
-        patch text_sample_url(text_sample), params: { text_sample: new_attributes }
+        patch text_sample_url(text_sample), params: {
+          text_sample: new_attributes
+        }
         text_sample.reload
         skip('Add assertions for updated state')
       end
@@ -137,9 +139,8 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
     end
   end
 
-  describe 'GET /generate' do
+  describe 'GET /generate' do # rubocop:disable Metrics/BlockLength
     let(:text_sample) { TextSample.create! valid_attributes }
-    let(:some_text) { 'some text' }
     let(:chunk_size) { 3 }
     let(:output_size) { 100 }
     let(:generate_params) do
@@ -147,25 +148,50 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
     end
 
     before(:each) do
-      allow(TextSample).to receive(:find).and_return(text_sample)
-      allow(text_sample).to receive(:generate_text).and_return(some_text)
-      get generate_text_sample_url(text_sample), params: {
-        chunk_size: chunk_size, output_size: output_size
-      }
+      allow(TextSample)
+        .to receive(:find).and_return(text_sample)
     end
 
-    it 'renders a successful response' do
-      expect(response).to be_successful
+    context 'WordChunks have not been built' do
+      let(:generated_text) { 'some text' }
+      let(:generation_result) { { message: 'bad' } }
+
+      before(:each) do
+        allow(text_sample)
+          .to receive(:generate).and_return(generation_result)
+        get generate_text_sample_url(text_sample), params: {
+          chunk_size: chunk_size, output_size: output_size
+        }
+      end
+
+      it 'renders a successful response' do
+        expect(response).to be_successful
+      end
+
+      it 'sets a flash message' do
+        expect(flash[:notice]).to eq(generation_result[:message])
+      end
     end
 
-    it 'uses the given parameters' do
-      expect(text_sample)
-        .to receive(:generate_text)
-        .with({ length: 100, chunk_size: 3 })
-    end
+    context 'WordChunks have been built' do
+      let(:generated_text) { 'some text' }
+      let(:generation_result) { { text: generated_text } }
 
-    it 'assigns the generated text' do
-      expect(assigns(:generated_text)).to eq(some_text)
+      before(:each) do
+        allow(text_sample)
+          .to receive(:generate).and_return(generation_result)
+        get generate_text_sample_url(text_sample), params: {
+          chunk_size: chunk_size, output_size: output_size
+        }
+      end
+
+      it 'renders a successful response' do
+        expect(response).to be_successful
+      end
+
+      it 'assigns the generated text' do
+        expect(assigns(:generation_result)).to eq(generation_result)
+      end
     end
   end
 end

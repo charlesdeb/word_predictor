@@ -22,9 +22,9 @@ RSpec.describe 'text_samples/show', type: :view do
     generate_params = { chunk_size: chunk_size, output_size: output_size }
 
     allow(@text_sample)
-      .to receive(:generate_text)
-      .and_return('The rain in Spain')
-    @generated_text = @text_sample.generate_text generate_params
+      .to receive(:generate)
+      .and_return({ text: 'The rain in Spain' })
+    @generated_text = @text_sample.generate generate_params
 
     render
 

@@ -141,7 +141,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       end
     end
 
-    describe '[performance]' do # rubocop:disable Metrics/BlockLength
+    describe '[performance]', skip: true do # rubocop:disable Metrics/BlockLength
       around(:each) do |example|
         start_time = DateTime.now
 
@@ -239,52 +239,104 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#generate_text' do # rubocop:disable Metrics/BlockLength
+  describe '#generate' do # rubocop:disable Metrics/BlockLength
     let(:text_sample) do
       TextSample.create!(description: 'Stuff', text: 'another man')
     end
-
     let(:chunk_size) { 3 }
     let(:output_size) { 5 }
     let(:generate_params) do
       { chunk_size: chunk_size, output_size: output_size }
     end
 
-    context 'parameters provided' do
-      let(:word_chunk) { double('WordChunk') }
+    it 'checks whether WordChunks have been generated for this TextSample' do
+      allow(text_sample).to receive(:chunks_built?)
+      text_sample.generate generate_params
+      expect(text_sample).to have_received(:chunks_built?)
+    end
+
+    context 'WordChunks not generated' do
+      it 'returns a warning' do
+        allow(text_sample).to receive(:chunks_built?).and_return(false)
+        result = text_sample.generate generate_params
+        expect(result[:message])
+          .not_to be(nil)
+        expect(result[:message])
+          .to match(/Word chunks have not been built for this text sample/)
+      end
+    end
+
+    context 'WordChunks generated' do
+      let(:generated_text) { 'some text' }
+      let(:generation_result) { { text: generated_text } }
 
       before(:each) do
-        allow(word_chunk).to receive(:text).and_return('abc')
-        allow(word_chunk).to receive(:select_next_character).and_return('a')
-        allow(WordChunk).to receive(:find_next_chunk).and_return(word_chunk)
-        allow(text_sample)
-          .to receive(:choose_starting_word_chunk).and_return(word_chunk)
+        allow(text_sample).to receive(:chunks_built?).and_return(true)
+        allow(text_sample).to receive(:generate_text).and_return(generated_text)
       end
 
-      it 'chooses a starting chunk' do
-        text_sample.generate_text generate_params
+      it 'generates the text' do
+        text_sample.generate generate_params
+        expect(text_sample)
+          .to have_received(:generate_text)
+          .with(chunk_size, output_size)
+      end
+
+      it 'returns a hash with the generated text' do
+        result = text_sample.generate generate_params
+
+        expect(result).to eq(generation_result)
+      end
+
+      it 'uses default chunk_size and output size if none provided' do
+        text_sample.generate
 
         expect(text_sample)
-          .to(have_received(:choose_starting_word_chunk)
-          .with(chunk_size))
-      end
-
-      it 'generates the right number of extra characters' do
-        text_sample.generate_text generate_params
-
-        expect(word_chunk)
-          .to(have_received(:select_next_character).twice)
-
-        expect(WordChunk)
-          .to(have_received(:find_next_chunk).twice)
-      end
-
-      it 'returns the right length of output text' do
-        expect(text_sample.generate_text(generate_params).size).to eq(5)
+          .to have_received(:generate_text)
+          .with(TextSample::DEFAULT_CHUNK_SIZE, TextSample::DEFAULT_OUTPUT_SIZE)
       end
     end
+  end
+  #   context 'parameters provided' do
+  #     let(:word_chunk) { double('WordChunk') }
 
-    context 'parameters not provided' do
-    end
+  #     before(:each) do
+  #       allow(text_sample).to receive(:chunks_built?).and_return(true)
+  #       allow(word_chunk).to receive(:text).and_return('abc')
+  #       allow(word_chunk).to receive(:select_next_character).and_return('a')
+  #       allow(WordChunk).to receive(:find_next_chunk).and_return(word_chunk)
+  #       allow(text_sample)
+  #         .to receive(:choose_starting_word_chunk).and_return(word_chunk)
+  #     end
+
+  #     it 'chooses a starting chunk' do
+  #       text_sample.generate generate_params
+
+  #       expect(text_sample)
+  #         .to(have_received(:choose_starting_word_chunk)
+  #         .with(chunk_size))
+  #     end
+
+  #     it 'generates the right number of extra characters' do
+  #       text_sample.generate generate_params
+
+  #       expect(word_chunk)
+  #         .to(have_received(:select_next_character).twice)
+
+  #       expect(WordChunk)
+  #         .to(have_received(:find_next_chunk).twice)
+  #     end
+
+  #     it 'returns the right length of output text' do
+  #       expect(text_sample.generate(generate_params).size).to eq(5)
+  #     end
+  #   end
+
+  #   context 'parameters not provided' do
+  #   end
+  # end
+
+  describe '#choose_starting_word_chunk' do
+    it ''
   end
 end

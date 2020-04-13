@@ -6,6 +6,9 @@ class TextSample < ApplicationRecord
   validates :description, presence: true
   validates :text, presence: true
 
+  DEFAULT_CHUNK_SIZE = 3
+  DEFAULT_OUTPUT_SIZE = 100
+
   def build_word_chunks
     # TODO: it might be better to get the upper limit from a setting, or
     # according to how many unique chunks we got for the previous chunk_size
@@ -69,20 +72,33 @@ class TextSample < ApplicationRecord
     end
   end
 
-  def generate_text(generate_params) # rubocop:disable Metrics/MethodLength
-    chunk_size = generate_params[:chunk_size]
-    output_size = generate_params[:output_size]
-    next_word_chunk = choose_starting_word_chunk(chunk_size)
-
-    output = next_word_chunk.text
-    while output.size < output_size
-      next_character = next_word_chunk.select_next_character
-      output += next_character
-      next_word_chunk = WordChunk
-                        .find_next_chunk(next_word_chunk, next_character)
+  def generate(params = {})
+    unless chunks_built?
+      return { message: 'Word chunks have not been built for this text sample' }
     end
 
-    output_size
+    chunk_size = params[:chunk_size] || DEFAULT_CHUNK_SIZE
+    output_size = params[:output_size] || DEFAULT_OUTPUT_SIZE
+
+    { text: generate_text(chunk_size, output_size) }
+
+    # next_word_chunk = choose_starting_word_chunk(chunk_size)
+
+    # output = next_word_chunk.text
+    # while output.size < output_size
+    #   next_character = next_word_chunk.select_next_character
+    #   output += next_character
+    #   next_word_chunk = WordChunk
+    #                     .find_next_chunk(next_word_chunk, next_character)
+    # end
+
+    # output
+  end
+
+  def generate_text(chunk_size, output_size) end
+
+  def chunks_built?
+    puts 'in chunks_built?'
   end
 
   def choose_starting_word_chunk(chunk_size); end

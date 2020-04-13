@@ -49,7 +49,7 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
   end
 
   describe 'GET /edit' do
-    it 'render a successful response' do
+    it 'renders a successful response' do
       text_sample = TextSample.create! valid_attributes
       get edit_text_sample_url(text_sample)
       expect(response).to be_successful
@@ -134,6 +134,25 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
       text_sample = TextSample.create! valid_attributes
       delete text_sample_url(text_sample)
       expect(response).to redirect_to(text_samples_url)
+    end
+  end
+
+  describe 'GET /generate' do
+    let(:text_sample) { TextSample.create! valid_attributes }
+    let(:some_text) { 'some text' }
+
+    before(:each) do
+      allow(TextSample).to receive(:find).and_return(text_sample)
+      allow(text_sample).to receive(:generate_text).and_return(some_text)
+      get generate_text_sample_url(text_sample)
+    end
+
+    it 'renders a successful response' do
+      expect(response).to be_successful
+    end
+
+    it 'assigns the generated text' do
+      expect(assigns(:generated_text)).to eq(some_text)
     end
   end
 end

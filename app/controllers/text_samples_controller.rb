@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TextSamplesController < ApplicationController
-  before_action :set_text_sample, only: %i[show edit update destroy]
+  before_action :set_text_sample, only: %i[show edit update destroy generate]
 
   # GET /text_samples
   # GET /text_samples.json
@@ -22,7 +22,14 @@ class TextSamplesController < ApplicationController
   def edit; end
 
   # GET /text_samples/1/generate
-  def generate; end
+  def generate
+    @generated_text = @text_sample.generate_text
+    # TODO: change the form_with in the show so that it submits via AJAX. This
+    # method would then return a piece of JS that adds the new text to the DOM
+    respond_to do |format|
+      format.html { render :show }
+    end
+  end
 
   # POST /text_samples
   # POST /text_samples.json

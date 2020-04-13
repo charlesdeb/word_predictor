@@ -68,4 +68,9 @@ class TextSample < ApplicationRecord
       )
     end
   end
+
+  def generate_text
+    puts 'in generate_text'
+    'Allk glgf ldfjg ldfkj gdflgdfj lgdfk '
+  end
 end

@@ -354,7 +354,41 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#choose_starting_word_chunk' do
-    it ''
+  describe '#choose_starting_word_chunk' do # rubocop:disable Metrics/BlockLength
+    let(:chunk_size) { 3 }
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'mice')
+    end
+
+    before(:each) do
+      text_sample.build_word_chunks_of_size(chunk_size)
+    end
+
+    it 'selects candidates' do
+      allow(WordChunk).to receive(:find_by)
+      text_sample.choose_starting_word_chunk chunk_size
+
+      expect(WordChunk)
+        .to have_received(:find_by)
+        .with({ text_sample_id: text_sample.id, size: chunk_size })
+    end
+
+    it 'all WordChunks are potential candidates' do
+      candidates = %w[mic ice]
+
+      # if we run this 100 times, it's pretty unlikely we won't get both of
+      # these
+      100.times do
+        candidate = text_sample.choose_starting_word_chunk(chunk_size)
+        candidates.delete(candidate.text) if candidates.include?(candidate.text)
+        break if candidates.empty?
+      end
+      expect(candidates).to eq([])
+    end
+
+    it 'is a WordChunk' do
+      result = text_sample.choose_starting_word_chunk(chunk_size)
+      expect(result).to be_instance_of(WordChunk)
+    end
   end
 end

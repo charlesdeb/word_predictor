@@ -101,5 +101,10 @@ class TextSample < ApplicationRecord
     !WordChunk.find_by(text_sample_id: id).nil?
   end
 
-  def choose_starting_word_chunk(chunk_size); end
+  def choose_starting_word_chunk(chunk_size)
+    candidates = WordChunk
+                 .where({ text_sample_id: id, size: chunk_size })
+                 .limit(nil)
+    candidates[(rand * candidates.size).to_i]
+  end
 end

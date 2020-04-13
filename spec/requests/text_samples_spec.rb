@@ -140,15 +140,28 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
   describe 'GET /generate' do
     let(:text_sample) { TextSample.create! valid_attributes }
     let(:some_text) { 'some text' }
+    let(:chunk_size) { 3 }
+    let(:output_size) { 100 }
+    let(:generate_params) do
+      { chunk_size: chunk_size, output_size: output_size }
+    end
 
     before(:each) do
       allow(TextSample).to receive(:find).and_return(text_sample)
       allow(text_sample).to receive(:generate_text).and_return(some_text)
-      get generate_text_sample_url(text_sample)
+      get generate_text_sample_url(text_sample), params: {
+        chunk_size: chunk_size, output_size: output_size
+      }
     end
 
     it 'renders a successful response' do
       expect(response).to be_successful
+    end
+
+    it 'uses the given parameters' do
+      expect(text_sample)
+        .to receive(:generate_text)
+        .with({ length: 100, chunk_size: 3 })
     end
 
     it 'assigns the generated text' do

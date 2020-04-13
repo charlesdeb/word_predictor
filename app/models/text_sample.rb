@@ -69,7 +69,7 @@ class TextSample < ApplicationRecord
     end
   end
 
-  def generate_text
+  def generate_text(_generate_params)
     puts 'in generate_text'
     'Allk glgf ldfjg ldfkj gdflgdfj lgdfk '
   end

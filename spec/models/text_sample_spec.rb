@@ -238,4 +238,8 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       )
     end
   end
+
+  describe '#generate_text' do
+    it ''
+  end
 end

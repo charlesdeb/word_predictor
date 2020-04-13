@@ -23,7 +23,7 @@ class TextSamplesController < ApplicationController
 
   # GET /text_samples/1/generate
   def generate
-    @generated_text = @text_sample.generate_text
+    @generated_text = @text_sample.generate_text generate_params
     # TODO: change the form_with in the show so that it submits via AJAX. This
     # method would then return a piece of JS that adds the new text to the DOM
     respond_to do |format|
@@ -85,5 +85,10 @@ class TextSamplesController < ApplicationController
   # Only allow a list of trusted parameters through.
   def text_sample_params
     params.require(:text_sample).permit(:description, :text)
+  end
+
+  # Only allow a list of trusted parameters through.
+  def generate_params
+    params.permit(:chunk_size, :output_size)
   end
 end

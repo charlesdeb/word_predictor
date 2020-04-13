@@ -65,9 +65,11 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
       end
 
       it 'builds new WordChunk records' do
-        expect do
-          post text_samples_url, params: { text_sample: valid_attributes }
-        end.to change(WordChunk, :count).by(70)
+        text_sample = TextSample.create!(valid_attributes)
+        allow(TextSample).to receive(:new).and_return(text_sample)
+        allow(text_sample).to receive(:build_word_chunks)
+        post text_samples_url, params: { text_sample: valid_attributes }
+        expect(text_sample).to have_received(:build_word_chunks)
       end
 
       it 'redirects to the created text_sample' do

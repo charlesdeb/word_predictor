@@ -324,62 +324,31 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     let(:word_chunk) { double('WordChunk') }
 
     before(:each) do
-      allow(word_chunk).to receive(:text).and_return('abc')
-      allow(word_chunk).to receive(:select_next_character).and_return('a')
-      allow(word_chunk).to receive(:find_next_chunk).and_return(word_chunk)
-      allow(text_sample)
+      allow(WordChunk)
         .to receive(:choose_starting_word_chunk).and_return(word_chunk)
+      allow(word_chunk)
+        .to receive(:text).and_return('abc')
+      allow(word_chunk)
+        .to receive(:choose_next_word_chunk).and_return(word_chunk)
     end
 
     it 'chooses a starting chunk' do
       text_sample.generate_text(chunk_size, output_size)
 
-      expect(text_sample)
+      expect(WordChunk)
         .to(have_received(:choose_starting_word_chunk)
-        .with(chunk_size))
+        .with(text_sample, chunk_size))
     end
 
     it 'generates the right number of extra characters' do
       text_sample.generate_text(chunk_size, output_size)
 
       expect(word_chunk)
-        .to(have_received(:select_next_character).twice)
-
-      expect(word_chunk)
-        .to(have_received(:find_next_chunk).twice)
+        .to(have_received(:choose_next_word_chunk).twice)
     end
 
     it 'returns the right length of output text' do
       expect(text_sample.generate_text(chunk_size, output_size).size).to eq(5)
-    end
-  end
-
-  describe '#choose_starting_word_chunk' do
-    let(:chunk_size) { 3 }
-    let(:text_sample) do
-      TextSample.create!(description: 'Stuff', text: 'mice')
-    end
-
-    before(:each) do
-      text_sample.build_word_chunks_of_size(chunk_size)
-    end
-
-    it 'all WordChunks are potential candidates' do
-      candidates = %w[mic ice]
-
-      # if we run this 100 times, it's pretty unlikely we won't get both of
-      # these
-      100.times do
-        candidate = text_sample.choose_starting_word_chunk(chunk_size)
-        candidates.delete(candidate.text) if candidates.include?(candidate.text)
-        break if candidates.empty?
-      end
-      expect(candidates).to eq([])
-    end
-
-    it 'is a WordChunk' do
-      result = text_sample.choose_starting_word_chunk(chunk_size)
-      expect(result).to be_instance_of(WordChunk)
     end
   end
 end

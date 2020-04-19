@@ -6,8 +6,8 @@ class TextSample < ApplicationRecord
   validates :description, presence: true
   validates :text, presence: true
 
-  DEFAULT_CHUNK_SIZE = 3
-  DEFAULT_OUTPUT_SIZE = 100
+  DEFAULT_CHUNK_SIZE = 8
+  DEFAULT_OUTPUT_SIZE = 700
 
   def build_word_chunks
     # TODO: it might be better to get the upper limit from a setting, or
@@ -88,13 +88,13 @@ class TextSample < ApplicationRecord
   end
 
   def generate_text(chunk_size, output_size)
-    word_chunk = choose_starting_word_chunk(chunk_size)
+    word_chunk = WordChunk.choose_starting_word_chunk(self, chunk_size)
 
     output = word_chunk.text
     while output.size < output_size
-      next_character = word_chunk.select_next_character
+      word_chunk = word_chunk.choose_next_word_chunk
+      next_character = word_chunk.text[-1]
       output += next_character
-      word_chunk = word_chunk.find_next_chunk(next_character)
     end
 
     output
@@ -102,12 +102,5 @@ class TextSample < ApplicationRecord
 
   def chunks_built?
     !WordChunk.find_by(text_sample_id: id).nil?
-  end
-
-  def choose_starting_word_chunk(chunk_size)
-    candidates = WordChunk
-                 .where({ text_sample_id: id, size: chunk_size })
-                 .limit(nil)
-    candidates[(rand * candidates.size).to_i]
   end
 end

@@ -42,13 +42,13 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     let(:chunk_hash) { { 'at' => 1 } }
 
     before(:each) do
-      allow(text_sample).to receive(:build_chunk_hash).and_return(chunk_hash)
+      allow(text_sample).to receive(:build_chunks_hash).and_return(chunk_hash)
       allow(text_sample).to receive(:save_word_chunks)
     end
 
     it 'builds a hash' do
       text_sample.build_word_chunks_of_size(2)
-      expect(text_sample).to have_received(:build_chunk_hash).with(2)
+      expect(text_sample).to have_received(:build_chunks_hash).with(2)
     end
 
     it 'attempts to save the hash to the database' do
@@ -59,32 +59,32 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#build_chunk_hash' do
+  describe '#build_chunks_hash' do
     context '2 letter text sample, chunk size of 2' do
       let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
       it 'builds hash' do
-        expect(text_sample.build_chunk_hash(2)).to eq({ 'at' => 1 })
+        expect(text_sample.build_chunks_hash(2)).to eq({ 'at' => 1 })
       end
     end
 
     context '3 letter text sample, chunk size of 2' do
       let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
       it 'builds hash' do
-        expect(text_sample.build_chunk_hash(2)).to eq({ 'an' => 1, 'nt' => 1 })
+        expect(text_sample.build_chunks_hash(2)).to eq({ 'an' => 1, 'nt' => 1 })
       end
     end
 
     context '3 letter text sample, chunk size of 2, repeating chunks' do
       let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaa') }
       it 'builds hash' do
-        expect(text_sample.build_chunk_hash(2)).to eq({ 'aa' => 2 })
+        expect(text_sample.build_chunks_hash(2)).to eq({ 'aa' => 2 })
       end
     end
 
     context '4 letter text sample, chunk size of 2, repeating chunks' do
       let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaab') }
       it 'builds hash' do
-        expect(text_sample.build_chunk_hash(2)).to eq({ 'aa' => 2, 'ab' => 1 })
+        expect(text_sample.build_chunks_hash(2)).to eq({ 'aa' => 2, 'ab' => 1 })
       end
     end
   end
@@ -106,12 +106,11 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
     let(:text_sample) do
       TextSample.create!(description: 'Longer sample', text: long_string)
-      # TextSample.create!(description: 'Longer sample', text: 'anty')
     end
 
     describe '[behaviour]' do
       let(:chunk_size) { 2 }
-      let(:chunks_hash) { text_sample.build_chunk_hash(chunk_size) }
+      let(:chunks_hash) { text_sample.build_chunks_hash(chunk_size) }
 
       before(:each) do
         allow(text_sample).to receive(:save_word_chunks_by_insert_all)
@@ -154,7 +153,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
 
       context 'chunk size of 2', chunk_size: 2 do
         let(:chunk_size) { 2 }
-        let(:chunks_hash) { text_sample.build_chunk_hash(chunk_size) }
+        let(:chunks_hash) { text_sample.build_chunks_hash(chunk_size) }
         it 'uses insert_all for individual word_chunks' do
           text_sample.save_word_chunks(chunks_hash, chunk_size, :insert_all)
         end
@@ -165,7 +164,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
 
       context 'chunk size of 3', chunk_size: 3 do
         let(:chunk_size) { 3 }
-        let(:chunks_hash) { text_sample.build_chunk_hash(chunk_size) }
+        let(:chunks_hash) { text_sample.build_chunks_hash(chunk_size) }
         it 'uses insert_all for individual word_chunks' do
           text_sample.save_word_chunks(chunks_hash, chunk_size, :insert_all)
         end
@@ -176,7 +175,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
 
       context 'chunk size of 4', chunk_size: 4 do
         let(:chunk_size) { 4 }
-        let(:chunks_hash) { text_sample.build_chunk_hash(chunk_size) }
+        let(:chunks_hash) { text_sample.build_chunks_hash(chunk_size) }
         it 'uses insert_all for individual word_chunks' do
           text_sample.save_word_chunks(chunks_hash, chunk_size, :insert_all)
         end
@@ -187,7 +186,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
 
       context 'chunk size of 8', chunk_size: 8 do
         let(:chunk_size) { 8 }
-        let(:chunks_hash) { text_sample.build_chunk_hash(chunk_size) }
+        let(:chunks_hash) { text_sample.build_chunks_hash(chunk_size) }
         it 'uses insert_all for individual word_chunks' do
           text_sample.save_word_chunks(chunks_hash, chunk_size, :insert_all)
         end
@@ -203,7 +202,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     let(:chunk_hash) { { 'an' => 1, 'nt' => 1 } }
 
     before(:each) do
-      allow(text_sample).to receive(:build_chunk_hash).and_return(chunk_hash)
+      allow(text_sample).to receive(:build_chunks_hash).and_return(chunk_hash)
     end
 
     it 'saves the hash to the database' do
@@ -221,7 +220,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     let(:chunk_hash) { { 'an' => 1, 'nt' => 1 } }
 
     before(:each) do
-      allow(text_sample).to receive(:build_chunk_hash).and_return(chunk_hash)
+      allow(text_sample).to receive(:build_chunks_hash).and_return(chunk_hash)
     end
 
     it 'saves the hash to the database' do

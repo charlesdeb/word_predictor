@@ -6,8 +6,8 @@ class TextSample < ApplicationRecord
   validates :description, presence: true
   validates :text, presence: true
 
-  DEFAULT_CHUNK_SIZE = 8
-  DEFAULT_OUTPUT_SIZE = 700
+  DEFAULT_CHUNK_SIZE = 2
+  DEFAULT_OUTPUT_SIZE = 20
 
   def build_word_chunks
     # TODO: it might be better to get the upper limit from a setting, or
@@ -21,13 +21,13 @@ class TextSample < ApplicationRecord
 
   def build_word_chunks_of_size(chunk_size, save_strategy = :insert_all)
     # create a hash
-    chunks_hash = build_chunk_hash(chunk_size)
+    chunks_hash = build_chunks_hash(chunk_size)
 
     # store it chunk by chunk in the database
     save_word_chunks(chunks_hash, chunk_size, save_strategy)
   end
 
-  def build_chunk_hash(chunk_size)
+  def build_chunks_hash(chunk_size)
     hash = Hash.new(0)
     limit = text.size - chunk_size
     (0..limit).each do |i|

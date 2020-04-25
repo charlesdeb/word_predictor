@@ -39,29 +39,22 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#choose_next_word_chunk' do # rubocop:disable Metrics/BlockLength
-    # let(:chunk_size) { 2 }
-    # let(:text_sample) do
-    #   TextSample.create!(description: 'Stuff', text: 'abc')
-    # end
-    # let(:text_sample) { double('text_sample', id: 123) }
-    # let(:word_chunk) { double('text_sample', id: 123) }
-    # use factory
+  describe '#choose_next_word_chunk' do
     let(:where_chain) { double('WhereChain') }
     let(:word_chunk) { create(:word_chunk) }
+    let(:candidates) { double('candidates') }
 
     before(:each) do
-      # puts word_chunk.inspect
-      # text_sample.build_word_chunks_of_size(chunk_size)
-    end
-
-    it 'finds candidate word chunks' do
-      allow(where_chain).to receive(:limit)
+      allow(WordChunk).to receive(:choose_word_chunk_from_candidates)
       allow(WordChunk)
         .to receive(:where).and_return(where_chain)
 
-      word_chunk.choose_next_word_chunk
+      allow(where_chain).to receive(:limit).and_return(candidates)
 
+      word_chunk.choose_next_word_chunk
+    end
+
+    it 'finds candidate word chunks' do
       expect(WordChunk)
         .to(have_received(:where)
         .with('text_sample_id = :text_sample_id AND size = :word_chunk_size AND text LIKE :chunk_tail',
@@ -70,14 +63,6 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
 
     it 'chooses word chunk from candidates' do
-      candidates = double('candidates')
-      allow(WordChunk)
-        .to receive(:where).and_return(where_chain)
-      allow(where_chain).to receive(:limit).and_return(candidates)
-      allow(WordChunk).to receive(:choose_word_chunk_from_candidates)
-
-      word_chunk.choose_next_word_chunk
-
       expect(WordChunk)
         .to(
           have_received(:choose_word_chunk_from_candidates).with(candidates)

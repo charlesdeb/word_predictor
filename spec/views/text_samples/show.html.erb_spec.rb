@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'text_samples/show', type: :view do
+RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/BlockLength
   before(:each) do
     @text_sample = assign(:text_sample, TextSample.create!(
                                           description: 'Description',
@@ -30,5 +30,20 @@ RSpec.describe 'text_samples/show', type: :view do
 
     expect(rendered).to match(/Generated Text/)
     expect(rendered).to match(/The rain in Spain/)
+  end
+
+  it 'shows a drop down for chunk size with a default' do
+    r = Regexp.new(
+      "<option selected=\"selected\" value=\"#{TextSample::DEFAULT_CHUNK_SIZE}\">#{TextSample::DEFAULT_CHUNK_SIZE}</option>"
+    )
+    render
+    expect(rendered).to match r
+  end
+  it 'sets the default output size' do
+    r = Regexp.new(
+      "id=\"output_size\" value=\"#{TextSample::DEFAULT_OUTPUT_SIZE}\""
+    )
+    render
+    expect(rendered).to match r
   end
 end

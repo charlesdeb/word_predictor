@@ -6,7 +6,7 @@ class TextSample < ApplicationRecord
   validates :description, presence: true
   validates :text, presence: true
 
-  DEFAULT_CHUNK_SIZE = 2
+  DEFAULT_CHUNK_SIZE = 4
   DEFAULT_OUTPUT_SIZE = 20
 
   def build_word_chunks

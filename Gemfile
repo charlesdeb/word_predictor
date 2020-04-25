@@ -46,6 +46,7 @@ group :development, :test do
 end
 
 group :test do
+  # gem 'capybara'
   gem 'rails-controller-testing' # for assigns in rspecs
   gem 'simplecov', require: false
 end

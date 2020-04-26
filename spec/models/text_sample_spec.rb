@@ -254,7 +254,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       expect(text_sample).to have_received(:chunks_built?)
     end
 
-    context 'WordChunks not generated' do
+    context 'WordChunks have not been generated' do
       it 'returns a warning' do
         allow(text_sample).to receive(:chunks_built?).and_return(false)
         result = text_sample.generate generate_params
@@ -265,26 +265,13 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       end
     end
 
-    context 'WordChunks generated' do
+    context 'WordChunks have been generated' do # rubocop:disable Metrics/BlockLength
       let(:generated_text) { 'some text' }
-      let(:generation_result) { { text: generated_text } }
-
       before(:each) do
         allow(text_sample).to receive(:chunks_built?).and_return(true)
-        allow(text_sample).to receive(:generate_text).and_return(generated_text)
-      end
-
-      it 'generates the text' do
-        text_sample.generate generate_params
-        expect(text_sample)
-          .to have_received(:generate_text)
-          .with(chunk_size, output_size)
-      end
-
-      it 'returns a hash with the generated text' do
-        result = text_sample.generate generate_params
-
-        expect(result).to eq(generation_result)
+        allow(text_sample)
+          .to receive(:generate_text)
+          .and_return({ text: generated_text, chunk_size: chunk_size })
       end
 
       it 'uses default chunk_size and output size if none provided' do
@@ -293,6 +280,43 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
         expect(text_sample)
           .to have_received(:generate_text)
           .with(TextSample::DEFAULT_CHUNK_SIZE, TextSample::DEFAULT_OUTPUT_SIZE)
+      end
+
+      context 'for one chunk_size' do
+        let(:generation_result) do
+          { output: [{ text: generated_text, chunk_size: chunk_size }] }
+        end
+
+        it 'generates the text' do
+          text_sample.generate generate_params
+          expect(text_sample)
+            .to have_received(:generate_text)
+            .with(chunk_size, output_size)
+        end
+
+        it 'returns a hash with the generated text' do
+          result = text_sample.generate generate_params
+
+          expect(result).to eq(generation_result)
+        end
+      end
+
+      context 'for all chunk_sizes' do
+        let(:generate_params) do
+          { chunk_size: 'all', output_size: output_size }
+        end
+
+        it 'generates the right number of texts' do
+          text_sample.generate generate_params
+          expect(text_sample)
+            .to have_received(:generate_text).exactly(TextSample::CHUNK_SIZE_RANGE.size).times
+        end
+
+        it 'returns a hash with the generated text' do
+          result = text_sample.generate generate_params
+
+          expect(result[:output].size).to eq(TextSample::CHUNK_SIZE_RANGE.size)
+        end
       end
     end
   end
@@ -347,7 +371,14 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
 
     it 'returns the right length of output text' do
-      expect(text_sample.generate_text(chunk_size, output_size).size).to eq(5)
+      result = text_sample.generate_text(chunk_size, output_size)
+      expect(result[:text].size).to eq(5)
+    end
+
+    it 'returns a hash with the right keys' do
+      result = text_sample.generate_text(chunk_size, output_size)
+      expect(result).to have_key(:chunk_size)
+      expect(result).to have_key(:text)
     end
   end
 end

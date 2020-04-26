@@ -14,22 +14,28 @@
       <div class="form-group row">
         <%= label_tag(:output_size, "Output size", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">
-          <%= text_field_tag(:output_size,TextSample::DEFAULT_OUTPUT_SIZE, class: "form-control") %>
+          <%= text_field_tag(:output_size, request.query_parameters[:output_size] || TextSample::DEFAULT_OUTPUT_SIZE, class: "form-control") %>
         </div>
       </div>
       <div class="form-group row">
         <%= label_tag(:chunk_size, "Chunk size", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">
-          <%= select_tag(:chunk_size, options_for_select([2,3,4,5,6,7,8], TextSample::DEFAULT_CHUNK_SIZE),class: "form-control") %>
+          <%= select_tag(:chunk_size, options_for_select([['All Chunk Sizes','all'],2,3,4,5,6,7,8], request.query_parameters[:chunk_size] || TextSample::DEFAULT_CHUNK_SIZE),class: "form-control") %>
         </div>
       </div>
       <%= submit_tag("Generate", class: "btn btn-primary") %>
-    <% end %>
-    <% if @generated_text %>
+    <% end  %>
+    <% if @generated_texts %>
       <div id="generated-text">
-        <h2>Generated Text</h2>
-        <p><%= @generated_text %></p>
-      </div>
-    <% end %>
-  </div>
+        <h2>Generated <%= 'Text'.pluralize(@generated_texts.size)%></h2>
+        <% if @generated_texts.size > 1 
+          @generated_texts.each do |generated_text| %>
+          <%= render 'show_generated_text', generated_text: generated_text %>
+        <% end %>
+      <% else %>
+        <p><%= @generated_texts[0][:text] %></p>
+      <% end %>
+    </div>
+  <% end %>
+</div>
 </div>

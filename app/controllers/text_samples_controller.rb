@@ -28,7 +28,7 @@ class TextSamplesController < ApplicationController
     if generation_result[:message]
       flash.now[:notice] = generation_result[:message]
     else
-      @generated_text = generation_result[:text]
+      @generated_texts = generation_result[:output]
     end
 
     # TODO: change the form_with in the show so that it submits via AJAX. This

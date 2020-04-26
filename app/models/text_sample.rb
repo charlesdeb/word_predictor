@@ -8,11 +8,12 @@ class TextSample < ApplicationRecord
 
   DEFAULT_CHUNK_SIZE = 4
   DEFAULT_OUTPUT_SIZE = 20
+  CHUNK_SIZE_RANGE = (2..8).freeze
 
   def build_word_chunks
     # TODO: it might be better to get the upper limit from a setting, or
     # according to how many unique chunks we got for the previous chunk_size
-    chunk_sizes = 2..8
+    chunk_sizes = CHUNK_SIZE_RANGE
 
     chunk_sizes.each do |chunk_size|
       build_word_chunks_of_size(chunk_size) unless text.size < chunk_size
@@ -44,8 +45,10 @@ class TextSample < ApplicationRecord
   def save_word_chunks(chunks_hash, chunk_size, save_strategy = :insert_all)
     case save_strategy
     when :insert_all
+      # uses lots of database rows
       save_word_chunks_by_insert_all(chunks_hash, chunk_size)
     when :create!
+      # VEEERY slow and uses lots of DB rows
       save_word_chunks_by_create(chunks_hash, chunk_size)
     else
       raise "Unknown save_strategy: #{save_strategy}"
@@ -77,14 +80,21 @@ class TextSample < ApplicationRecord
       return { message: 'Word chunks have not been built for this text sample' }
     end
 
-    chunk_size =
-      params[:chunk_size].to_i.zero? ? DEFAULT_CHUNK_SIZE : params[:chunk_size].to_i
     output_size =
       params[:output_size].to_i.zero? ? DEFAULT_OUTPUT_SIZE : params[:output_size].to_i
 
-    {
-      text: generate_text(chunk_size, output_size)
-    }
+    output = []
+
+    if params[:chunk_size] == 'all'
+      CHUNK_SIZE_RANGE.each do |chunk_size|
+        output.push(generate_text(chunk_size, output_size))
+      end
+    else
+      chunk_size =
+        params[:chunk_size].to_i.zero? ? DEFAULT_CHUNK_SIZE : params[:chunk_size].to_i
+      output.push(generate_text(chunk_size, output_size))
+    end
+    { output: output }
   end
 
   def generate_text(chunk_size, output_size)
@@ -97,7 +107,7 @@ class TextSample < ApplicationRecord
       output += next_character
     end
 
-    output
+    { text: output, chunk_size: chunk_size }
   end
 
   def chunks_built?

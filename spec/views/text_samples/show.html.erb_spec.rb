@@ -16,34 +16,101 @@ RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/Blo
     expect(rendered).to match(/MyText/)
   end
 
-  it 'shows generated text' do
-    chunk_size = 3
-    output_size = 100
-    generate_params = { chunk_size: chunk_size, output_size: output_size }
+  context 'plain show' do
+    before(:each) do
+      render
+    end
 
-    allow(@text_sample)
-      .to receive(:generate)
-      .and_return({ text: 'The rain in Spain' })
-    @generated_text = @text_sample.generate(generate_params)[:text]
+    it 'shows a drop down for chunk size with a default' do
+      chunk_size = TextSample::DEFAULT_CHUNK_SIZE
+      regexp = Regexp.new(
+        "<option selected=\"selected\" value=\"#{chunk_size}\">#{chunk_size}"
+      )
+      expect(rendered).to match regexp
+    end
 
-    render
+    it "shows a drop down with 'all chunk sizes'" do
+      regexp = Regexp.new(
+        '<option value="all">All Chunk Sizes'
+      )
+      expect(rendered).to match regexp
+    end
 
-    expect(rendered).to match(/Generated Text/)
-    expect(rendered).to match(/The rain in Spain/)
+    it 'sets the default output size' do
+      output_size = TextSample::DEFAULT_OUTPUT_SIZE
+      regexp = Regexp.new(
+        "id=\"output_size\" value=\"#{output_size}\""
+      )
+      render
+      expect(rendered).to match regexp
+    end
   end
 
-  it 'shows a drop down for chunk size with a default' do
-    r = Regexp.new(
-      "<option selected=\"selected\" value=\"#{TextSample::DEFAULT_CHUNK_SIZE}\">#{TextSample::DEFAULT_CHUNK_SIZE}</option>"
-    )
-    render
-    expect(rendered).to match r
-  end
-  it 'sets the default output size' do
-    r = Regexp.new(
-      "id=\"output_size\" value=\"#{TextSample::DEFAULT_OUTPUT_SIZE}\""
-    )
-    render
-    expect(rendered).to match r
+  context 'after generation' do # rubocop:disable Metrics/BlockLength
+    let(:generated_text) { 'some text' }
+    let(:chunk_size) { 3 }
+    let(:output_size) { 33 }
+
+    describe 'uses form values from last time' do
+      let(:request) do
+        double('request',
+               query_parameters: {
+                 output_size: output_size, chunk_size: chunk_size
+               })
+      end
+
+      it 'sets chunk_size to the last chosen value' do
+        regexp = Regexp.new(
+          "<option selected=\"selected\" value=\"#{chunk_size}\">#{chunk_size}"
+        )
+        render template: 'text_samples/show.html.erb',
+               locals: { request: request }
+        expect(rendered).to match regexp
+      end
+
+      it 'sets output_size to the last chosen value' do
+        regexp = Regexp.new(
+          "id=\"output_size\" value=\"#{output_size}\""
+        )
+        render template: 'text_samples/show.html.erb',
+               locals: { request: request }
+        expect(rendered).to match regexp
+      end
+    end
+
+    it 'shows text for one chunk size' do
+      @generated_texts = [{ text: generated_text, chunk_size: chunk_size }]
+
+      render
+
+      expect(rendered).to match(/Generated Text/)
+      expect(rendered).not_to match(/Generated Texts/)
+
+      regexp = Regexp.new("Chunk Size #{chunk_size}")
+      expect(rendered).not_to match(regexp)
+
+      regexp = Regexp.new(generated_text)
+      expect(rendered).to match(regexp)
+    end
+
+    it 'shows text for multiple chunk sizes' do
+      @generated_texts = [
+        { text: "#{generated_text}-2", chunk_size: 2 },
+        { text: "#{generated_text}-3", chunk_size: 3 }
+      ]
+
+      render
+
+      expect(rendered).to match(/Generated Texts/)
+
+      expect(rendered).to match(/Chunk Size 2/)
+      expect(rendered).to match(/Chunk Size 3/)
+
+      regexp = Regexp.new("#{generated_text}-2")
+      expect(rendered).to match(regexp)
+
+      regexp = Regexp.new("#{generated_text}-3")
+      expect(rendered).to match(regexp)
+    end
   end
 end

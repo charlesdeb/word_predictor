@@ -152,8 +152,34 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
         .to receive(:find).and_return(text_sample)
     end
 
+    describe 'setting generate parameters' do
+      let(:generation_result) { { message: 'bad' } }
+
+      before(:each) do
+        allow(text_sample)
+          .to receive(:generate).and_return(generation_result)
+
+        get generate_text_sample_url(text_sample), params: {
+          chunk_size: chunk_size, output_size: output_size
+        }
+      end
+
+      it 'sets chunk_size in form to last chosen value' do
+        # ensure chunk size is set
+        regexp = Regexp.new(
+          "<option selected=\"selected\" value=\"#{chunk_size}\">#{chunk_size}"
+        )
+        expect(response.body).to match regexp
+
+        # ensure output size is set
+        regexp = Regexp.new(
+          "id=\"output_size\" value=\"#{output_size}\""
+        )
+        expect(response.body).to match regexp
+      end
+    end
+
     context 'WordChunks have not been built' do
-      let(:generated_text) { 'some text' }
       let(:generation_result) { { message: 'bad' } }
 
       before(:each) do
@@ -175,11 +201,15 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
 
     context 'WordChunks have been built' do
       let(:generated_text) { 'some text' }
-      let(:generation_result) { { text: generated_text } }
+
+      let(:generation_result) do
+        { output: [{ text: generated_text, chunk_size: chunk_size }] }
+      end
 
       before(:each) do
         allow(text_sample)
           .to receive(:generate).and_return(generation_result)
+
         get generate_text_sample_url(text_sample), params: {
           chunk_size: chunk_size, output_size: output_size
         }

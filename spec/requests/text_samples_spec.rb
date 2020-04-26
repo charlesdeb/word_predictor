@@ -189,8 +189,8 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
         expect(response).to be_successful
       end
 
-      it 'assigns the generated text' do
-        expect(assigns(:generated_text)).to eq(generated_text)
+      it 'contains the generated text' do
+        expect(response.body).to include(generated_text)
       end
     end
   end

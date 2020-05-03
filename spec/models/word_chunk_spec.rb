@@ -57,8 +57,8 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     it 'finds candidate word chunks' do
       expect(WordChunk)
         .to(have_received(:where)
-        .with('text_sample_id = :text_sample_id AND size = :word_chunk_size AND text LIKE :chunk_tail',
-              { chunk_tail: 't%', text_sample_id: word_chunk.text_sample_id,
+        .with('text_sample_id = :text_sample_id AND size = :word_chunk_size AND text LIKE :chunk_head',
+              { chunk_head: 't%', text_sample_id: word_chunk.text_sample_id,
                 word_chunk_size: 2 }))
     end
 
@@ -71,19 +71,19 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
   end
 
   describe '::choose_word_chunk_from_candidates' do
-    let(:probabilities_array) { [build(:word_chunk), build(:word_chunk)] }
+    let(:counts_array) { [build(:word_chunk), build(:word_chunk)] }
     let(:candidates) { double('candidates') }
 
     before(:each) do
       allow(WordChunk)
-        .to receive(:build_probabilities_array).and_return(probabilities_array)
+        .to receive(:build_counts_array).and_return(counts_array)
     end
 
     it 'calculates probabilities of each word chunk' do
       WordChunk.choose_word_chunk_from_candidates(candidates)
 
       expect(WordChunk)
-        .to(have_received(:build_probabilities_array).with(candidates))
+        .to(have_received(:build_counts_array).with(candidates))
     end
 
     it 'selects a word chunk' do
@@ -93,15 +93,15 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '::build_probabilities_array' do
+  describe '::build_counts_array' do
     let!(:word_chunk_at) { create(:word_chunk, text: 'at', count: 2) }
     let!(:word_chunk_an) { create(:word_chunk, text: 'an', count: 1) }
     let(:candidates) { WordChunk.all }
 
     it 'has the right number of elements' do
-      probabilities_array = WordChunk.build_probabilities_array(candidates)
+      counts_array = WordChunk.build_counts_array(candidates)
 
-      expect(probabilities_array.size).to eq(3)
+      expect(counts_array.size).to eq(3)
     end
   end
 

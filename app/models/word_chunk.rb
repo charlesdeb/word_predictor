@@ -16,28 +16,28 @@ class WordChunk < ApplicationRecord
 
   # Choose the next word chunk after this one
   def choose_next_word_chunk
-    chunk_tail = "#{text[1..-1]}%"
+    chunk_head = "#{text[1..-1]}%"
 
     candidates = WordChunk
-                 .where('text_sample_id = :text_sample_id AND size = :word_chunk_size AND text LIKE :chunk_tail',
+                 .where('text_sample_id = :text_sample_id AND size = :word_chunk_size AND text LIKE :chunk_head',
                         text_sample_id: text_sample.id, word_chunk_size: size,
-                        chunk_tail: chunk_tail)
+                        chunk_head: chunk_head)
                  .limit(nil)
 
     WordChunk.choose_word_chunk_from_candidates(candidates)
   end
 
   def self.choose_word_chunk_from_candidates(candidates)
-    probabilities_array = WordChunk.build_probabilities_array(candidates)
+    counts_array = WordChunk.build_counts_array(candidates)
 
-    probabilities_array[(rand * probabilities_array.size).to_i]
+    counts_array[(rand * counts_array.size).to_i]
   end
 
-  def self.build_probabilities_array(candidates)
-    probabilities_array = []
+  def self.build_counts_array(candidates)
+    counts_array = []
     candidates.each do |word_chunk|
-      word_chunk.count.times { probabilities_array.push(word_chunk) }
+      word_chunk.count.times { counts_array.push(word_chunk) }
     end
-    probabilities_array
+    counts_array
   end
 end

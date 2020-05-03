@@ -1,0 +1,12 @@
+<h1> Settings</h1>
+<%= form_for(Setting.new, url: settings_path) do |f| %>
+  <div class="form-group">
+    <label class="control-label">Chunk Size to use for generation</label>
+    <%= f.text_field :chunk_size, value: Setting.chunk_size, class: "form-control", placeholder: "'all' or a number from 2 to 8"  %>
+  </div>
+  <div class="form-group">
+    <label class="control-label">Number of characters in generated text's output</label>
+    <%= f.text_field :output_size, value: Setting.output_size, class: "form-control", placeholder: "the number of characters to generate e.g. 250"  %>
+  </div>
+  <%= submit_tag("Update", class: 'btn btn-primary') %>
+<% end %>

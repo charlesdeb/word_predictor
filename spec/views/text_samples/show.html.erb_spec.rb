@@ -22,22 +22,23 @@ RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/Blo
     end
 
     it 'shows a drop down for chunk size with a default' do
-      chunk_size = TextSample::DEFAULT_CHUNK_SIZE
+      chunk_size = Setting.chunk_size
       regexp = Regexp.new(
-        "<option selected=\"selected\" value=\"#{chunk_size}\">#{chunk_size}"
+        "<option selected=\"selected\" value=\"#{chunk_size}\">"
       )
       expect(rendered).to match regexp
     end
 
     it "shows a drop down with 'all chunk sizes'" do
       regexp = Regexp.new(
-        '<option value="all">All Chunk Sizes'
+        '<option (.*) value="all">All Chunk Sizes'
       )
       expect(rendered).to match regexp
     end
 
     it 'sets the default output size' do
-      output_size = TextSample::DEFAULT_OUTPUT_SIZE
+      # output_size = Setting.output_size
+      output_size = Setting.output_size
       regexp = Regexp.new(
         "id=\"output_size\" value=\"#{output_size}\""
       )

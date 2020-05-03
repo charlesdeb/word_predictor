@@ -17,13 +17,14 @@
         <div class="navbar-nav">
           <%= link_to "Home", root_path, class: "nav-item nav-link active" %>
           <%= link_to "Text Samples", text_samples_path, class: "nav-item nav-link"%>
+          <%= link_to "Settings", settings_path, class: "nav-item nav-link"%>
           <a class="nav-item nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
         </div>
       </div>
     </nav>
     <div id="main-container" class="container">
       <% flash.each do |type, msg| %>
-        <div class="alert alert-<%= type %>">
+        <div class="alert alert-<%= type == 'notice' ? 'success' : type %>">
           <%= msg %>
         </div>
       <% end %>

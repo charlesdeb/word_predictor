@@ -14,13 +14,13 @@
       <div class="form-group row">
         <%= label_tag(:output_size, "Output size", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">
-          <%= text_field_tag(:output_size, request.query_parameters[:output_size] || TextSample::DEFAULT_OUTPUT_SIZE, class: "form-control") %>
+          <%= text_field_tag(:output_size, request.query_parameters[:output_size] || Setting.output_size, class: "form-control") %>
         </div>
       </div>
       <div class="form-group row">
         <%= label_tag(:chunk_size, "Chunk size", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">
-          <%= select_tag(:chunk_size, options_for_select([['All Chunk Sizes','all'],2,3,4,5,6,7,8], request.query_parameters[:chunk_size] || TextSample::DEFAULT_CHUNK_SIZE),class: "form-control") %>
+          <%= select_tag(:chunk_size, options_for_select([['All Chunk Sizes','all'],2,3,4,5,6,7,8], request.query_parameters[:chunk_size] || Setting.chunk_size),class: "form-control") %>
         </div>
       </div>
       <%= submit_tag("Generate", class: "btn btn-primary") %>

@@ -6,8 +6,6 @@ class TextSample < ApplicationRecord
   validates :description, presence: true
   validates :text, presence: true
 
-  DEFAULT_CHUNK_SIZE = 4
-  DEFAULT_OUTPUT_SIZE = 20
   CHUNK_SIZE_RANGE = (2..8).freeze
 
   def build_word_chunks
@@ -81,7 +79,7 @@ class TextSample < ApplicationRecord
     end
 
     output_size =
-      params[:output_size].to_i.zero? ? DEFAULT_OUTPUT_SIZE : params[:output_size].to_i
+      params[:output_size].to_i.zero? ? Setting.output_size : params[:output_size].to_i
 
     output = []
 
@@ -91,7 +89,7 @@ class TextSample < ApplicationRecord
       end
     else
       chunk_size =
-        params[:chunk_size].to_i.zero? ? DEFAULT_CHUNK_SIZE : params[:chunk_size].to_i
+        params[:chunk_size].to_i.zero? ? Setting.chunk_size : params[:chunk_size].to_i
       output.push(generate_text(chunk_size, output_size))
     end
     { output: output }

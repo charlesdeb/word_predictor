@@ -279,7 +279,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
 
         expect(text_sample)
           .to have_received(:generate_text)
-          .with(TextSample::DEFAULT_CHUNK_SIZE, TextSample::DEFAULT_OUTPUT_SIZE)
+          .with(Setting.chunk_size, Setting.output_size)
       end
 
       context 'for one chunk_size' do

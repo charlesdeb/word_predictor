@@ -10,6 +10,248 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     it { should belong_to(:text_sample) }
   end
 
+  describe '::analyse' do
+    it 'builds 2 character chunks' do
+      text_sample = create(:text_sample_two_chars)
+      allow(WordChunk).to receive(:build_word_chunks_of_size)
+      WordChunk.analyse text_sample
+
+      expect(WordChunk).to(
+        have_received(:build_word_chunks_of_size).with(text_sample, 2).once
+      )
+      expect(WordChunk).not_to(
+        have_received(:build_word_chunks_of_size).with(text_sample, 3)
+      )
+    end
+
+    it 'builds 2 and 3 character chunks' do
+      text_sample = create(:text_sample_three_chars)
+      allow(WordChunk).to receive(:build_word_chunks_of_size)
+      WordChunk.analyse(text_sample)
+
+      expect(WordChunk).to(
+        have_received(:build_word_chunks_of_size).with(text_sample, 2).once
+      )
+      expect(WordChunk).to(
+        have_received(:build_word_chunks_of_size).with(text_sample, 3).once
+      )
+    end
+  end
+
+  describe '::build_word_chunks_of_size' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
+    let(:chunks_hash) { { 'at' => 1 } }
+
+    before(:each) do
+      allow(WordChunk).to receive(:build_chunks_hash).and_return(chunks_hash)
+      allow(WordChunk).to receive(:save_word_chunks)
+      WordChunk.build_word_chunks_of_size(text_sample, 2)
+    end
+
+    it 'builds a hash' do
+      expect(WordChunk)
+        .to have_received(:build_chunks_hash)
+        .with(text_sample.text, 2)
+    end
+
+    it 'saves the hash to the database' do
+      expect(WordChunk)
+        .to have_received(:save_word_chunks)
+        .with(chunks_hash, text_sample, 2, :insert_all)
+    end
+  end
+
+  describe '::build_chunks_hash' do # rubocop:disable Metrics/BlockLength
+    context '2 letter text sample, chunk size of 2' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
+      it 'builds hash' do
+        expect(WordChunk.build_chunks_hash(text_sample.text, 2))
+          .to eq({ 'at' => 1 })
+      end
+    end
+
+    context '3 letter text sample, chunk size of 2' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
+      it 'builds hash' do
+        expect(WordChunk.build_chunks_hash(text_sample.text, 2))
+          .to eq({ 'an' => 1, 'nt' => 1 })
+      end
+    end
+
+    context '3 letter text sample, chunk size of 2, repeating chunks' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaa') }
+      it 'builds hash' do
+        expect(WordChunk.build_chunks_hash(text_sample.text, 2))
+          .to eq({ 'aa' => 2 })
+      end
+    end
+
+    context '4 letter text sample, chunk size of 2, repeating chunks' do
+      let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaab') }
+      it 'builds hash' do
+        expect(WordChunk.build_chunks_hash(text_sample.text, 2))
+          .to eq({ 'aa' => 2, 'ab' => 1 })
+      end
+    end
+  end
+
+  describe '::save_word_chunks' do # rubocop:disable Metrics/BlockLength
+    let(:long_string) do
+      <<~LONG.strip
+        The rain in Spain falls mainly in the plain, but we do not really
+        know what we are missing in this much longer sentence. Will it
+        make a massive difference to the import time, or am I just
+        doing premature optimisation which by common consent is largely
+        seen as a waste of time. But here we go, adding a bunch more text
+        to see if the extra overhead of text will make the slightest bit of
+        difference to the import time. Right now, I am not convinced, but
+        who knows. The best way to know is always to measure and then
+        measure again - checking the hypothesis against the actual results
+        of the test.
+      LONG
+    end
+    let(:text_sample) do
+      TextSample.create!(description: 'Longer sample', text: long_string)
+    end
+
+    describe '[behaviour]' do
+      let(:chunk_size) { 2 }
+      let(:chunks_hash) { WordChunk.build_chunks_hash(text_sample.text, chunk_size) }
+
+      before(:each) do
+        allow(WordChunk).to receive(:save_word_chunks_by_insert_all)
+        allow(WordChunk).to receive(:save_word_chunks_by_create)
+      end
+
+      it 'raises an exception for an unknown save_strategy' do
+        expect do
+          WordChunk.save_word_chunks(chunks_hash, text_sample, chunk_size, :bogus_strategy)
+        end
+          .to raise_exception(/Unknown save_strategy/)
+      end
+
+      it 'uses :insert_all as the default strategy' do
+        WordChunk.save_word_chunks(chunks_hash, text_sample, chunk_size)
+        expect(WordChunk).to have_received(:save_word_chunks_by_insert_all)
+      end
+
+      it 'uses :insert_all when instructed' do
+        WordChunk.save_word_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+        expect(WordChunk).to have_received(:save_word_chunks_by_insert_all)
+      end
+
+      it 'uses :create! when instructed' do
+        WordChunk.save_word_chunks(chunks_hash, text_sample, chunk_size, :create!)
+        expect(WordChunk).to have_received(:save_word_chunks_by_create)
+      end
+    end
+
+    describe '[performance]', skip: true do # rubocop:disable Metrics/BlockLength
+      around(:each) do |example|
+        start_time = DateTime.now
+
+        example.run
+
+        seconds_elapsed = (DateTime.now - start_time) * 1000.0
+        chunk_size = example.metadata[:chunk_size]
+        puts "saving chunks (size #{chunk_size} took #{seconds_elapsed} seconds"
+      end
+
+      context 'chunk size of 2', chunk_size: 2 do
+        let(:chunk_size) { 2 }
+        let(:chunks_hash) { WordChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        it 'uses insert_all for individual word_chunks' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+        end
+        it 'uses individual create! for each word_chunk' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :create!)
+        end
+      end
+
+      context 'chunk size of 3', chunk_size: 3 do
+        let(:chunk_size) { 3 }
+        let(:chunks_hash) { WordChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        it 'uses insert_all for individual word_chunks' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+        end
+        it 'uses individual create! for each word_chunk' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :create!)
+        end
+      end
+
+      context 'chunk size of 4', chunk_size: 4 do
+        let(:chunk_size) { 4 }
+        let(:chunks_hash) { WordChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        it 'uses insert_all for individual word_chunks' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+        end
+        it 'uses individual create! for each word_chunk' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :create!)
+        end
+      end
+
+      context 'chunk size of 8', chunk_size: 8 do
+        let(:chunk_size) { 8 }
+        let(:chunks_hash) { WordChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        it 'uses insert_all for individual word_chunks' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+        end
+        it 'uses individual create! for each word_chunk' do
+          WordChunk
+            .save_word_chunks(chunks_hash, text_sample, chunk_size, :create!)
+        end
+      end
+    end
+  end
+
+  describe '::save_word_chunks_by_insert_all' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
+    let(:chunk_hash) { { 'an' => 1, 'nt' => 1 } }
+
+    before(:each) do
+      allow(WordChunk).to receive(:build_chunks_hash).and_return(chunk_hash)
+    end
+
+    it 'saves the hash to the database' do
+      allow(WordChunk).to receive(:insert_all)
+      WordChunk.save_word_chunks_by_insert_all(chunk_hash, text_sample, 2)
+
+      expect(WordChunk).to(
+        have_received(:insert_all).once
+      )
+    end
+  end
+
+  describe '::save_word_chunks_by_create' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
+    let(:chunk_hash) { { 'an' => 1, 'nt' => 1 } }
+
+    before(:each) do
+      allow(WordChunk).to receive(:build_chunks_hash).and_return(chunk_hash)
+    end
+
+    it 'saves the hash to the database' do
+      allow(WordChunk).to receive(:create!)
+      WordChunk.save_word_chunks_by_create(chunk_hash, text_sample, 2)
+
+      expect(WordChunk).to(
+        have_received(:create!)
+        .with(text: 'an', size: 2, count: 1, text_sample_id: text_sample.id)
+      )
+      expect(WordChunk).to(
+        have_received(:create!)
+        .with(text: 'nt', size: 2, count: 1, text_sample_id: text_sample.id)
+      )
+    end
+  end
+
   describe '::choose_starting_word_chunk' do
     let(:chunk_size) { 3 }
     let(:text_sample) do
@@ -17,7 +259,7 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
 
     before(:each) do
-      text_sample.build_word_chunks_of_size(chunk_size)
+      WordChunk.build_word_chunks_of_size(text_sample, chunk_size)
     end
 
     it 'all WordChunks are potential candidates' do

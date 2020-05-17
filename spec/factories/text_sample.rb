@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
-# This will guess the TextSample class
 FactoryBot.define do
+  # This will guess the TextSample class
+  factory :text_sample do
+    description { 'Three words' }
+    text { 'Mack the knife' }
+  end
+
   factory :text_sample_two_chars, class: TextSample do
     description { 'Two characters' }
     text { 'At' }

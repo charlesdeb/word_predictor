@@ -4,9 +4,10 @@
 class Setting < RailsSettings::Base
   cache_prefix { 'v1' }
 
-  # Define your fields
+  field :generate_strategy, type: :string, default: 'word_chunk'
   field :chunk_size, type: :string, default: 'all'
   field :output_size, type: :integer, default: 250
+  field :prior_word_count, type: :string, default: 'all'
 
   # field :host, type: :string, default: "http://localhost:3000"
   # field :default_locale, default: "en", type: :string

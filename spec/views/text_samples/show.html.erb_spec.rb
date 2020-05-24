@@ -16,9 +16,26 @@ RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/Blo
     expect(rendered).to match(/MyText/)
   end
 
-  context 'plain show' do
+  context 'plain show' do # rubocop:disable Metrics/BlockLength
     before(:each) do
       render
+    end
+
+    it 'shows a drop down for generate strategy with a default' do
+      generate_strategy = Setting.generate_strategy
+      regexp = Regexp.new(
+        "<option selected=\"selected\" value=\"#{generate_strategy}\">"
+      )
+      expect(rendered).to match regexp
+    end
+
+    it 'sets the default output size' do
+      output_size = Setting.output_size
+      regexp = Regexp.new(
+        "id=\"output_size\" value=\"#{output_size}\""
+      )
+      render
+      expect(rendered).to match regexp
     end
 
     it 'shows a drop down for chunk size with a default' do
@@ -36,13 +53,18 @@ RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/Blo
       expect(rendered).to match regexp
     end
 
-    it 'sets the default output size' do
-      # output_size = Setting.output_size
-      output_size = Setting.output_size
+    it 'shows a drop down for prior word count with a default' do
+      prior_word_count = Setting.prior_word_count
       regexp = Regexp.new(
-        "id=\"output_size\" value=\"#{output_size}\""
+        "<option selected=\"selected\" value=\"#{prior_word_count}\">"
       )
-      render
+      expect(rendered).to match regexp
+    end
+
+    it "shows a drop down with 'all prior word counts'" do
+      regexp = Regexp.new(
+        '<option (.*) value="all">All Prior Word Counts'
+      )
       expect(rendered).to match regexp
     end
   end

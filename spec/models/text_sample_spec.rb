@@ -55,12 +55,15 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
           .and_return({ text: generated_text, chunk_size: chunk_size })
       end
 
-      it 'uses default chunk_size and output size if none provided' do
+      it 'sets generate parameters' do
+        allow(text_sample)
+          .to receive(:get_generate_params)
+          .and_return([output_size, chunk_size])
+
         text_sample.generate
 
         expect(text_sample)
-          .to have_received(:generate_text)
-          .with(Setting.chunk_size, Setting.output_size)
+          .to have_received(:get_generate_params)
       end
 
       context 'for one chunk_size' do
@@ -103,6 +106,32 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
+  describe '#get_generate_params' do
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+    let(:chunk_size) { 3 }
+    let(:output_size) { 5 }
+    let(:generate_params) do
+      { chunk_size: chunk_size, output_size: output_size }
+    end
+
+    it 'uses default chunk_size and output size if no params provided' do
+      e_chunk_size, e_output_size = text_sample.get_generate_params
+
+      expect(e_chunk_size).to eq(Setting.chunk_size)
+      expect(e_output_size).to eq(Setting.output_size)
+    end
+
+    it 'extracts params' do
+      e_chunk_size, e_output_size = text_sample
+                                    .get_generate_params generate_params
+
+      expect(e_chunk_size).to eq(chunk_size)
+      expect(e_output_size).to eq(output_size)
+    end
+  end
+
   describe '#chunks_built?' do
     let(:text_sample) do
       TextSample.create!(description: 'Stuff', text: 'another man')
@@ -118,7 +147,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  describe '#generate_text' do # rubocop:disable Metrics/BlockLength
+  describe '#generate_text' do
     let(:text_sample) do
       TextSample.create!(description: 'Stuff', text: 'another man')
     end

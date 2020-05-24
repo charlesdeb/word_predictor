@@ -24,21 +24,28 @@ class TextSample < ApplicationRecord
       return { message: 'Word chunks have not been built for this text sample' }
     end
 
-    output_size =
-      params[:output_size].to_i.zero? ? Setting.output_size : params[:output_size].to_i
+    chunk_size, output_size = get_generate_params(params)
 
     output = []
 
-    if params[:chunk_size] == 'all'
-      WordChunk::CHUNK_SIZE_RANGE.each do |chunk_size|
-        output.push(generate_text(chunk_size, output_size))
+    if chunk_size == 'all'
+      WordChunk::CHUNK_SIZE_RANGE.each do |current_chunk_size|
+        output.push(generate_text(current_chunk_size, output_size))
       end
     else
-      chunk_size =
-        params[:chunk_size].to_i.zero? ? Setting.chunk_size : params[:chunk_size].to_i
       output.push(generate_text(chunk_size, output_size))
     end
     { output: output }
+  end
+
+  def get_generate_params(params = {})
+    chunk_size =
+      params[:chunk_size].to_i.zero? ? Setting.chunk_size : params[:chunk_size].to_i
+
+    output_size =
+      params[:output_size].to_i.zero? ? Setting.output_size : params[:output_size].to_i
+
+    [chunk_size, output_size]
   end
 
   def generate_text(chunk_size, output_size)

@@ -12,7 +12,7 @@
     <h2>Generate</h2>
     <%= form_with(model: @text_sample, url: url_for([:generate, @text_sample]), method: "get", local: true) do %>
       <div class="form-group row">
-        <%= label_tag(:generate_strategy, "Strategy", class: "col-sm-3 col-form-label") %>
+        <%= label_tag(:strategy, "Strategy", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">
           <%= select_tag(:generate_strategy, options_for_select(TextSample::STRATEGIES.map {| strategy| [strategy.to_s.humanize, strategy]}, request.query_parameters[:generate_strategy] || Setting.generate_strategy),class: "form-control") %>
         </div>
@@ -27,12 +27,6 @@
         <%= label_tag(:chunk_size, "Chunk size", class: "col-sm-3 col-form-label") %>
         <div class="col-sm-9">
           <%= select_tag(:chunk_size, options_for_select([['All Chunk Sizes','all'],2,3,4,5,6,7,8], request.query_parameters[:chunk_size] || Setting.chunk_size),class: "form-control") %>
-        </div>
-      </div>
-      <div class="form-group row">
-        <%= label_tag(:prior_word_count, "Prior Word Count", class: "col-sm-3 col-form-label") %>
-        <div class="col-sm-9">
-          <%= select_tag(:prior_word_count, options_for_select([['All Prior Word Counts','all'],2,3,4,5,6,7,8], request.query_parameters[:prior_word_count] || Setting.prior_word_count),class: "form-control") %>
         </div>
       </div>
       <%= submit_tag("Generate", class: "btn btn-primary") %>

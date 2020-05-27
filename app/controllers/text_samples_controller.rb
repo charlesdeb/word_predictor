@@ -46,7 +46,10 @@ class TextSamplesController < ApplicationController
       if @text_sample.save
         @text_sample.analyse
 
-        format.html { redirect_to @text_sample, notice: 'Text sample was successfully created.' }
+        format.html do
+          redirect_to @text_sample,
+                      notice: 'Text sample was successfully created and analysed.'
+        end
         format.json { render :show, status: :created, location: @text_sample }
       else
         format.html { render :new }
@@ -60,6 +63,7 @@ class TextSamplesController < ApplicationController
   def update # rubocop:disable Metrics/MethodLength
     respond_to do |format|
       if @text_sample.update(text_sample_params)
+        # TODO: reanalyse the text
         format.html { redirect_to @text_sample, notice: 'Text sample was successfully updated.' }
         format.json { render :show, status: :ok, location: @text_sample }
       else

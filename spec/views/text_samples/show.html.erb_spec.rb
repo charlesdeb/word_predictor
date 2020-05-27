@@ -22,9 +22,9 @@ RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/Blo
     end
 
     it 'shows a drop down for generate strategy with a default' do
-      generate_strategy = Setting.generate_strategy
+      strategy = Setting.generate_strategy
       regexp = Regexp.new(
-        "<option selected=\"selected\" value=\"#{generate_strategy}\">"
+        "<option selected=\"selected\" value=\"#{strategy}\">"
       )
       expect(rendered).to match regexp
     end
@@ -49,21 +49,6 @@ RSpec.describe 'text_samples/show', type: :view do # rubocop:disable Metrics/Blo
     it "shows a drop down with 'all chunk sizes'" do
       regexp = Regexp.new(
         '<option (.*) value="all">All Chunk Sizes'
-      )
-      expect(rendered).to match regexp
-    end
-
-    it 'shows a drop down for prior word count with a default' do
-      prior_word_count = Setting.prior_word_count
-      regexp = Regexp.new(
-        "<option selected=\"selected\" value=\"#{prior_word_count}\">"
-      )
-      expect(rendered).to match regexp
-    end
-
-    it "shows a drop down with 'all prior word counts'" do
-      regexp = Regexp.new(
-        '<option (.*) value="all">All Prior Word Counts'
       )
       expect(rendered).to match regexp
     end

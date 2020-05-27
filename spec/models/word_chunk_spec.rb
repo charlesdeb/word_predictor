@@ -54,7 +54,7 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
         .with(text_sample.text, 2)
     end
 
-    it 'saves the hash to the database' do
+    it 'saves the hash' do
       expect(WordChunk)
         .to have_received(:save_word_chunks)
         .with(chunks_hash, text_sample, 2, :insert_all)
@@ -252,6 +252,182 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
+  describe '::generate' do # rubocop:disable Metrics/BlockLength
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+    let(:chunk_size) { 3 }
+    let(:output_size) { 5 }
+    let(:generate_params) do
+      { chunk_size: chunk_size,
+        output_size: output_size,
+        text_sample_id: text_sample.id }
+    end
+
+    it 'checks whether WordChunks have been generated for given TextSample' do
+      allow(WordChunk).to receive(:chunks_built_for?)
+      WordChunk.generate generate_params
+      expect(WordChunk).to have_received(:chunks_built_for?)
+    end
+
+    context 'WordChunks have not been generated' do
+      it 'returns a warning' do
+        allow(WordChunk).to receive(:chunks_built_for?).and_return(false)
+        result = WordChunk.generate generate_params
+        expect(result[:message])
+          .not_to be(nil)
+        expect(result[:message])
+          .to match(/Word chunks have not been built for this text sample/)
+      end
+    end
+
+    context 'WordChunks have been generated' do # rubocop:disable Metrics/BlockLength
+      let(:generated_text) { 'some text' }
+      before(:each) do
+        allow(WordChunk).to receive(:chunks_built_for?).and_return(true)
+        allow(WordChunk)
+          .to receive(:generate_text)
+          .and_return({ text: generated_text, chunk_size: chunk_size })
+        allow(WordChunk)
+          .to receive(:extract_generate_params)
+          .and_return([chunk_size, output_size, text_sample.id])
+      end
+
+      it 'extracts generate parameters' do
+        # allow(WordChunk)
+        #   .to receive(:extract_generate_params)
+        #   .and_return([output_size, chunk_size, text_sample.id])
+
+        WordChunk.generate generate_params
+
+        expect(WordChunk)
+          .to have_received(:extract_generate_params)
+      end
+
+      context 'for one chunk_size' do
+        let(:generation_result) do
+          { output: [{ text: generated_text, chunk_size: chunk_size }] }
+        end
+
+        it 'generates the text' do
+          WordChunk.generate generate_params
+          expect(WordChunk)
+            .to have_received(:generate_text)
+            .with(chunk_size, output_size, text_sample.id)
+        end
+
+        it 'returns a hash with the generated text' do
+          result = WordChunk.generate generate_params
+
+          expect(result).to eq(generation_result)
+        end
+      end
+
+      context 'for all chunk_sizes' do
+        let(:chunk_size) { 'all' }
+        let(:generate_params) do
+          { chunk_size: :chunk_size,
+            output_size: output_size,
+            text_sample_id: text_sample.id }
+        end
+
+        before(:each) do
+          allow(WordChunk)
+            .to receive(:extract_generate_params)
+            .and_return([chunk_size, output_size, text_sample.id])
+        end
+
+        it 'generates the right number of texts' do
+          WordChunk.generate generate_params
+          expect(WordChunk)
+            .to have_received(:generate_text)
+            .exactly(WordChunk::CHUNK_SIZE_RANGE.size).times
+        end
+
+        it 'returns a hash with the generated text' do
+          result = WordChunk.generate generate_params
+
+          expect(result[:output].size).to eq(WordChunk::CHUNK_SIZE_RANGE.size)
+        end
+      end
+    end
+  end
+
+  describe '::extract_generate_params' do
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+    let(:chunk_size) { 3 }
+    let(:output_size) { 5 }
+    let(:generate_params) do
+      { chunk_size: chunk_size,
+        output_size: output_size,
+        text_sample_id: text_sample.id }
+    end
+
+    it 'uses default chunk_size and output size if no params provided' do
+      e_chunk_size, e_output_size = WordChunk.extract_generate_params
+
+      expect(e_chunk_size).to eq(Setting.chunk_size)
+      expect(e_output_size).to eq(Setting.output_size)
+    end
+
+    it 'extracts params' do
+      e_chunk_size, e_output_size, e_text_sample_id = WordChunk
+                                                      .extract_generate_params generate_params
+
+      expect(e_chunk_size).to eq(chunk_size)
+      expect(e_output_size).to eq(output_size)
+      expect(e_text_sample_id).to eq(text_sample.id)
+    end
+  end
+
+  describe '::generate_text' do # rubocop:disable Metrics/BlockLength
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+
+    let(:chunk_size) { 3 }
+    let(:output_size) { 5 }
+    let(:word_chunk) { double('WordChunk') }
+
+    before(:each) do
+      allow(WordChunk)
+        .to receive(:choose_starting_word_chunk).and_return(word_chunk)
+      allow(word_chunk)
+        .to receive(:text).and_return('abc')
+      allow(word_chunk)
+        .to receive(:choose_next_word_chunk).and_return(word_chunk)
+    end
+
+    it 'chooses a starting chunk' do
+      WordChunk.generate_text(chunk_size, output_size, text_sample.id)
+
+      expect(WordChunk)
+        .to(have_received(:choose_starting_word_chunk)
+        .with(text_sample.id, chunk_size))
+    end
+
+    it 'generates the right number of extra characters' do
+      WordChunk.generate_text(chunk_size, output_size, text_sample.id)
+
+      expect(word_chunk)
+        .to(have_received(:choose_next_word_chunk).twice)
+    end
+
+    it 'returns the right length of output text' do
+      result = WordChunk.generate_text(chunk_size, output_size, text_sample.id)
+
+      expect(result[:text].size).to eq(5)
+    end
+
+    it 'returns a hash with the right keys' do
+      result = WordChunk.generate_text(chunk_size, output_size, text_sample.id)
+      expect(result).to have_key(:chunk_size)
+      expect(result).to have_key(:text)
+    end
+  end
+
   describe '::choose_starting_word_chunk' do
     let(:chunk_size) { 3 }
     let(:text_sample) do
@@ -268,7 +444,9 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
       # if we run this 100 times, it's pretty unlikely we won't get both of
       # these
       100.times do
-        candidate = WordChunk.choose_starting_word_chunk(text_sample, chunk_size)
+        candidate = WordChunk.choose_starting_word_chunk(
+          text_sample.id, chunk_size
+        )
         candidates.delete(candidate.text) if candidates.include?(candidate.text)
         break if candidates.empty?
       end
@@ -276,7 +454,7 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
 
     it 'returns a WordChunk' do
-      result = WordChunk.choose_starting_word_chunk(text_sample, chunk_size)
+      result = WordChunk.choose_starting_word_chunk(text_sample.id, chunk_size)
       expect(result).to be_instance_of(WordChunk)
     end
   end
@@ -348,83 +526,4 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
   end
 
   describe ''
-  # describe '#choose_next_word_chunk' do
-  #   context 'chunk size of 2' do
-  #     let(:chunk_size) { 2 }
-  #     let(:text_sample) do
-  #       TextSample.create!(description: 'Stuff', text: 'abcdef')
-  #     end
-
-  #     before(:each) do
-  #       text_sample.build_word_chunks_of_size(chunk_size)
-  #     end
-
-  #     it 'returns a WordChunk starting with the right letters' do
-  #       word_chunk = WordChunk.where(
-  #         { text_sample_id: text_sample.id, text: 'ab', size: chunk_size }
-  #       ).first
-  #       result = word_chunk.choose_next_word_chunk
-  #       expect(result.text[0]).to eq('b')
-  #     end
-  #   end
-
-  #   context 'chunk size of 3' do
-  #     let(:chunk_size) { 3 }
-  #     let(:text_sample) do
-  #       TextSample.create!(description: 'Stuff', text: 'abcdef')
-  #     end
-
-  #     before(:each) do
-  #       text_sample.build_word_chunks_of_size(chunk_size)
-  #     end
-
-  #     it 'returns a WordChunk starting with the right letters' do
-  #       word_chunk = WordChunk.where(
-  #         { text_sample_id: text_sample.id, text: 'abc', size: chunk_size }
-  #       ).first
-  #       result = word_chunk.choose_next_word_chunk
-  #       expect(result.text[0..1]).to eq('bc')
-  #     end
-  #   end
-  #     let(:chunk_size) { 2 }
-  #     let(:text_sample) do
-  #       TextSample.create!(description: 'Stuff', text: 'abc abd abe fgh fgh fgi')
-  #     end
-
-  #     before(:each) do
-  #       text_sample.build_word_chunks_of_size(chunk_size)
-  #     end
-
-  #     it 'chooses c,d and e after ab more or less evenly' do
-  #       results = Hash.new(0)
-  #       word_chunk = WordChunk.where(
-  #         { text_sample_id: text_sample.id, text: 'ab', size: chunk_size }
-  #       ).first
-  #       300.times do
-  #         next_work_chunk = word_chunk.choose_next_word_chunk
-  #         results[next_work_chunk.text[-1]] += 1
-  #       end
-  #       puts results
-
-  #       expect(results['c']).to be_within(15).of(100)
-  #       expect(results['d']).to be_within(15).of(100)
-  #       expect(results['e']).to be_within(15).of(100)
-  #     end
-
-  #     it 'chooses h after fg more or less twice as many time' do
-  #       results = Hash.new(0)
-  #       word_chunk = WordChunk.where(
-  #         { text_sample_id: text_sample.id, text: 'fg', size: chunk_size }
-  #       ).first
-  #       3.times do
-  #         next_work_chunk = word_chunk.choose_next_word_chunk
-  #         results[next_work_chunk.text[-1]] += 1
-  #       end
-  #       puts results
-
-  #       # expect(results['h']).to be_within(15).of(200)
-  #       # expect(results['i']).to be_within(15).of(100)
-  #     end
-  #   end
-  # end
 end

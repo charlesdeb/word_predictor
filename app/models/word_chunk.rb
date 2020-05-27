@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WordChunk < ApplicationRecord
+class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :text_sample
 
   validates :text, presence: true
@@ -80,9 +80,61 @@ class WordChunk < ApplicationRecord
     end
   end
 
-  def self.choose_starting_word_chunk(text_sample, chunk_size)
+  # Entry point for generating text using the word chunk strategy
+  def self.generate(params = {}) # rubocop:disable Metrics/MethodLength
+    unless chunks_built_for? params[:text_sample_id]
+      return { message: 'Word chunks have not been built for this text sample' }
+    end
+
+    chunk_size, output_size, text_sample_id = extract_generate_params(params)
+
+    output = []
+
+    if chunk_size == 'all'
+      CHUNK_SIZE_RANGE.each do |current_chunk_size|
+        output.push(generate_text(current_chunk_size, output_size, text_sample_id))
+      end
+    else
+      output.push(generate_text(chunk_size, output_size, text_sample_id))
+    end
+
+    { output: output }
+  end
+
+  def self.extract_generate_params(params = {})
+    chunk_size = if params[:chunk_size]
+                    .to_i.zero?
+                   Setting.chunk_size
+                 else params[:chunk_size].to_i
+                 end
+
+    output_size = if params[:output_size]
+                     .to_i.zero?
+                    Setting.output_size else params[:output_size].to_i end
+
+    [chunk_size, output_size, params[:text_sample_id]]
+  end
+
+  def self.chunks_built_for?(text_sample_id)
+    !WordChunk.find_by(text_sample_id: text_sample_id).nil?
+  end
+
+  def self.generate_text(chunk_size, output_size, text_sample_id)
+    word_chunk = choose_starting_word_chunk(text_sample_id, chunk_size)
+
+    output = word_chunk.text
+    while output.size < output_size
+      word_chunk = word_chunk.choose_next_word_chunk
+      next_character = word_chunk.text[-1]
+      output += next_character
+    end
+
+    { text: output, chunk_size: chunk_size }
+  end
+
+  def self.choose_starting_word_chunk(text_sample_id, chunk_size)
     candidates = WordChunk
-                 .where({ text_sample_id: text_sample.id, size: chunk_size })
+                 .where({ text_sample_id: text_sample_id, size: chunk_size })
                  .limit(nil)
     candidates[(rand * candidates.size).to_i]
   end

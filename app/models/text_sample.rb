@@ -6,62 +6,33 @@ class TextSample < ApplicationRecord
   validates :description, presence: true
   validates :text, presence: true
 
-  STRATEGIES = %i[word_chunk word].freeze
+  STRATEGIES = %i[word_chunk sentence_chunk].freeze
 
   def analyse
     STRATEGIES.each do |strategy|
       case strategy
       when :word_chunk
         WordChunk.analyse self
-        # when :word
-
+        # when :sentence_chunk
+        #   SentenceChunk.analyse self
       end
     end
   end
 
-  def generate(params = {})
-    unless chunks_built?
-      return { message: 'Word chunks have not been built for this text sample' }
-    end
+  # generate text for the current text sample using the given strategy
+  def generate(params = { strategy: :word_chunk })
+    # add the current text sample to params
+    params.merge!({ text_sample_id: id })
 
-    chunk_size, output_size = get_generate_params(params)
-
-    output = []
-
-    if chunk_size == 'all'
-      WordChunk::CHUNK_SIZE_RANGE.each do |current_chunk_size|
-        output.push(generate_text(current_chunk_size, output_size))
-      end
+    # case params['strategy'].parameterize.underscore.to_sym
+    # case params.except!(:strategy)
+    case params.extract!(:strategy)
+    when :word_chunk
+      { strategy: :word_chunk }.merge(WordChunk.generate(params))
+    when :sentence_chunk
+      { strategy: :sentence_chunk }.merge(SentenceChunk.generate(params))
     else
-      output.push(generate_text(chunk_size, output_size))
+      { strategy: :word_chunk }.merge(WordChunk.generate(params))
     end
-    { output: output }
-  end
-
-  def get_generate_params(params = {})
-    chunk_size =
-      params[:chunk_size].to_i.zero? ? Setting.chunk_size : params[:chunk_size].to_i
-
-    output_size =
-      params[:output_size].to_i.zero? ? Setting.output_size : params[:output_size].to_i
-
-    [chunk_size, output_size]
-  end
-
-  def generate_text(chunk_size, output_size)
-    word_chunk = WordChunk.choose_starting_word_chunk(self, chunk_size)
-
-    output = word_chunk.text
-    while output.size < output_size
-      word_chunk = word_chunk.choose_next_word_chunk
-      next_character = word_chunk.text[-1]
-      output += next_character
-    end
-
-    { text: output, chunk_size: chunk_size }
-  end
-
-  def chunks_built?
-    !WordChunk.find_by(text_sample_id: id).nil?
   end
 end

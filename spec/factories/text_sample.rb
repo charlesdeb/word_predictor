@@ -16,4 +16,14 @@ FactoryBot.define do
     description { 'Three characters' }
     text { 'The' }
   end
+
+  factory :text_sample_two_tokens, class: TextSample do
+    description { 'Two tokens' }
+    text { 'Hey!' }
+  end
+
+  factory :text_sample_three_tokens, class: TextSample do
+    description { 'Three tokens' }
+    text { 'Hey dude' }
+  end
 end

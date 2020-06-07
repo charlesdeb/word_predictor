@@ -11,41 +11,41 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
   end
 
   describe '::analyse' do
-    it 'builds 2 character chunks' do
+    it 'counts 2 character chunks' do
       text_sample = create(:text_sample_two_chars)
-      allow(WordChunk).to receive(:build_word_chunks_of_size)
+      allow(WordChunk).to receive(:count_chunks_of_size)
       WordChunk.analyse text_sample
 
       expect(WordChunk).to(
-        have_received(:build_word_chunks_of_size).with(text_sample, 2).once
+        have_received(:count_chunks_of_size).with(text_sample, 2).once
       )
       expect(WordChunk).not_to(
-        have_received(:build_word_chunks_of_size).with(text_sample, 3)
+        have_received(:count_chunks_of_size).with(text_sample, 3)
       )
     end
 
-    it 'builds 2 and 3 character chunks' do
+    it 'counts 2 and 3 character chunks' do
       text_sample = create(:text_sample_three_chars)
-      allow(WordChunk).to receive(:build_word_chunks_of_size)
+      allow(WordChunk).to receive(:count_chunks_of_size)
       WordChunk.analyse(text_sample)
 
       expect(WordChunk).to(
-        have_received(:build_word_chunks_of_size).with(text_sample, 2).once
+        have_received(:count_chunks_of_size).with(text_sample, 2).once
       )
       expect(WordChunk).to(
-        have_received(:build_word_chunks_of_size).with(text_sample, 3).once
+        have_received(:count_chunks_of_size).with(text_sample, 3).once
       )
     end
   end
 
-  describe '::build_word_chunks_of_size' do
+  describe '::count_chunks_of_size' do
     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
     let(:chunks_hash) { { 'at' => 1 } }
 
     before(:each) do
       allow(WordChunk).to receive(:build_chunks_hash).and_return(chunks_hash)
       allow(WordChunk).to receive(:save_word_chunks)
-      WordChunk.build_word_chunks_of_size(text_sample, 2)
+      WordChunk.count_chunks_of_size(text_sample, 2)
     end
 
     it 'builds a hash' do
@@ -435,7 +435,7 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
 
     before(:each) do
-      WordChunk.build_word_chunks_of_size(text_sample, chunk_size)
+      WordChunk.count_chunks_of_size(text_sample, chunk_size)
     end
 
     it 'all WordChunks are potential candidates' do

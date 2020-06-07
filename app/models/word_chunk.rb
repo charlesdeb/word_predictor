@@ -16,13 +16,13 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
     chunk_sizes.each do |chunk_size|
       unless text_sample.text.size < chunk_size
-        build_word_chunks_of_size(text_sample, chunk_size)
+        count_chunks_of_size(text_sample, chunk_size)
       end
     end
   end
 
-  def self.build_word_chunks_of_size(text_sample, chunk_size,
-                                     save_strategy = :insert_all)
+  def self.count_chunks_of_size(text_sample, chunk_size,
+                                save_strategy = :insert_all)
     # create a hash
     chunks_hash = build_chunks_hash(text_sample.text, chunk_size)
 

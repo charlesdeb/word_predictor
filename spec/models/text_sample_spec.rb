@@ -16,10 +16,10 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       expect(WordChunk).to have_received(:analyse).with(text_sample)
     end
 
-    skip 'uses sentence chunk strategy' do
-      allow(WordChunk).to receive(:analyse)
+    it 'uses sentence chunk strategy' do
+      allow(SentenceChunk).to receive(:analyse)
       text_sample.analyse
-      expect(WordChunk).to have_received(:analyse).with(text_sample)
+      expect(SentenceChunk).to have_received(:analyse).with(text_sample)
     end
   end
 

@@ -13,8 +13,8 @@ class TextSample < ApplicationRecord
       case strategy
       when :word_chunk
         WordChunk.analyse self
-        # when :sentence_chunk
-        #   SentenceChunk.analyse self
+      when :sentence_chunk
+        SentenceChunk.analyse self
       end
     end
   end

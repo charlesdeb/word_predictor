@@ -4,6 +4,7 @@ require 'rails_helper'
 
 RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLength
   describe 'validations' do
+    it { should validate_presence_of(:text) }
     it { should validate_presence_of(:size) }
     it { should validate_presence_of(:count) }
     it { should belong_to(:text_sample) }
@@ -84,60 +85,94 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
     end
   end
 
-  # describe '::count_chunks_of_size' do
-  #   let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
-  #   let(:chunks_hash) { { 'at' => 1 } }
+  describe '::count_chunks_of_size' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at ') }
+    let(:sentence_chunks) { ['at', ' '] }
+    let(:chunks_hash) { { 'at ' => 1 } }
 
-  #   before(:each) do
-  #     allow(SentenceChunk).to receive(:build_chunks_hash).and_return(chunks_hash)
-  #     allow(SentenceChunk).to receive(:save_chunks)
-  #     SentenceChunk.count_chunks_of_size(text_sample, 2)
-  #   end
+    before(:each) do
+      allow(SentenceChunk).to receive(:build_chunks_hash).and_return(chunks_hash)
+      allow(SentenceChunk).to receive(:save_chunks)
 
-  #   it 'builds a hash' do
-  #     expect(SentenceChunk)
-  #       .to have_received(:build_chunks_hash)
-  #       .with(text_sample.text, 2)
-  #   end
+      SentenceChunk.count_chunks_of_size(
+        sentence_chunks, text_sample.id, 2
+      )
+    end
 
-  #   it 'saves the hash' do
-  #     expect(SentenceChunk)
-  #       .to have_received(:save_chunks)
-  #       .with(chunks_hash, text_sample, 2, :insert_all)
-  #   end
-  # end
-  #   context '2 letter text sample, chunk size of 2' do
-  #     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
-  #     it 'builds hash' do
-  #       expect(SentenceChunk.build_chunks_hash(text_sample.text, 2))
-  #         .to eq({ 'at' => 1 })
-  #     end
-  #   end
+    it 'builds a hash' do
+      expect(SentenceChunk)
+        .to have_received(:build_chunks_hash)
+        .with(sentence_chunks, 2)
+    end
 
-  #   context '3 letter text sample, chunk size of 2' do
-  #     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }
-  #     it 'builds hash' do
-  #       expect(SentenceChunk.build_chunks_hash(text_sample.text, 2))
-  #         .to eq({ 'an' => 1, 'nt' => 1 })
-  #     end
-  #   end
+    it 'saves the hash' do
+      expect(SentenceChunk)
+        .to have_received(:save_chunks)
+        .with(chunks_hash, text_sample.id, 2, :insert_all)
+    end
+  end
 
-  #   context '3 letter text sample, chunk size of 2, repeating chunks' do
-  #     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaa') }
-  #     it 'builds hash' do
-  #       expect(SentenceChunk.build_chunks_hash(text_sample.text, 2))
-  #         .to eq({ 'aa' => 2 })
-  #     end
-  #   end
+  describe '::build_chunks_hash' do # rubocop:disable Metrics/BlockLength
+    context '2 token text sample, chunk size of 2' do
+      let(:text_sample) do
+        TextSample.create!(description: 'Stuff', text: 'at ')
+      end
 
-  #   context '4 letter text sample, chunk size of 2, repeating chunks' do
-  #     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'aaab') }
-  #     it 'builds hash' do
-  #       expect(SentenceChunk.build_chunks_hash(text_sample.text, 2))
-  #         .to eq({ 'aa' => 2, 'ab' => 1 })
-  #     end
-  #   end
-  # end
+      let(:sentence_chunks) do
+        SentenceChunk.split_into_tokens(text_sample.text)
+      end
+
+      it 'builds hash' do
+        expect(SentenceChunk.build_chunks_hash(sentence_chunks, 2))
+          .to eq({ 'at ' => 1 })
+      end
+    end
+
+    context '3 token text sample, chunk size of 2' do
+      let(:text_sample) do
+        TextSample.create!(description: 'Stuff', text: 'ant man')
+      end
+
+      let(:sentence_chunks) do
+        SentenceChunk.split_into_tokens(text_sample.text)
+      end
+
+      it 'builds hash' do
+        expect(SentenceChunk.build_chunks_hash(sentence_chunks, 2))
+          .to eq({ 'ant ' => 1, ' man' => 1 })
+      end
+    end
+
+    context '3 token text sample, chunk size of 2, repeating chunks' do
+      let(:text_sample) do
+        TextSample.create!(description: 'Stuff', text: '!!!')
+      end
+
+      let(:sentence_chunks) do
+        SentenceChunk.split_into_tokens(text_sample.text)
+      end
+
+      it 'builds hash' do
+        expect(SentenceChunk.build_chunks_hash(sentence_chunks, 2))
+          .to eq({ '!!' => 2 })
+      end
+    end
+
+    context '4 token text sample, chunk size of 2, repeating chunks' do
+      let(:text_sample) do
+        TextSample.create!(description: 'Stuff', text: 'ant ant ')
+      end
+
+      let(:sentence_chunks) do
+        SentenceChunk.split_into_tokens(text_sample.text)
+      end
+      it 'builds hash' do
+        expect(SentenceChunk.build_chunks_hash(sentence_chunks, 2))
+          .to eq({ 'ant ' => 2, ' ant' => 1 })
+      end
+    end
+  end
+
   #   let(:long_string) do
   #     <<~LONG.strip
   #       The rain in Spain falls mainly in the plain, but we do not really

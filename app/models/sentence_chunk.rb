@@ -8,6 +8,7 @@
 class SentenceChunk < ApplicationRecord
   belongs_to :text_sample
 
+  validates :text, presence: true # may normalise this later
   validates :size, presence: true
   validates :count, presence: true
 
@@ -48,6 +49,22 @@ class SentenceChunk < ApplicationRecord
   def self.count_chunks_of_size(
     sentence_chunks, text_sample_id, chunk_size
   )
-    [sentence_chunks, text_sample_id, chunk_size]
+    chunks_hash = build_chunks_hash(sentence_chunks, chunk_size)
+
+    save_chunks(chunks_hash, text_sample_id, chunk_size, :insert_all)
   end
+
+  def self.build_chunks_hash(sentence_chunks, chunk_size)
+    hash = Hash.new(0)
+    limit = sentence_chunks.size - chunk_size
+    (0..limit).each do |i|
+      # iterate through the sentence chunks one token at a time
+      chunk_text = sentence_chunks[i, chunk_size].join
+      # increment the count of the chunk we just found
+      hash[chunk_text] += 1
+    end
+    hash
+  end
+
+  def self.save_chunks(chunk_hash, text_sample_id, chunk_size, save_strategy); end
 end

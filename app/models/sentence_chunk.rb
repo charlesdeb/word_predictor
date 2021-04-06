@@ -4,7 +4,7 @@
 # refactoring into a Chunk parent class eventually
 
 # for a Sentence Chunk, a 'chunk' is an ordered collection of words, spaces and
-# punctuation (called tokens)
+# punctuation (all called tokens)
 class SentenceChunk < ApplicationRecord
   belongs_to :text_sample
 

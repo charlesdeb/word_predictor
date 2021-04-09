@@ -15,14 +15,14 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     chunk_sizes = CHUNK_SIZE_RANGE
 
     chunk_sizes.each do |chunk_size|
-      unless text_sample.text.size < chunk_size
-        count_chunks_of_size(text_sample, chunk_size)
-      end
+      count_chunks_of_size(text_sample, chunk_size) unless text_sample.text.size < chunk_size
     end
   end
 
-  def self.count_chunks_of_size(text_sample, chunk_size,
-                                save_strategy = :insert_all)
+  def self.count_chunks_of_size(
+    text_sample, chunk_size,
+    save_strategy = :insert_all
+  )
     # create a hash
     chunks_hash = build_chunks_hash(text_sample.text, chunk_size)
 
@@ -44,8 +44,10 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # TODO: these are rather slow and inefficient; storing a single hash per
   # row may be a better solution
-  def self.save_word_chunks(chunks_hash, text_sample, chunk_size,
-                            save_strategy = :insert_all)
+  def self.save_word_chunks(
+    chunks_hash, text_sample, chunk_size,
+    save_strategy = :insert_all
+  )
 
     case save_strategy
     when :insert_all
@@ -63,9 +65,11 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     current_time = DateTime.now
     import_array = []
     chunks_hash.each do |chunk_text, count|
-      import_hash = { text: chunk_text, size: chunk_size,
-                      count: count, text_sample_id: text_sample.id,
-                      created_at: current_time, updated_at: current_time }
+      import_hash = {
+        text: chunk_text, size: chunk_size,
+        count: count, text_sample_id: text_sample.id,
+        created_at: current_time, updated_at: current_time
+      }
       import_array << import_hash
     end
     WordChunk.insert_all import_array
@@ -102,11 +106,12 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   def self.extract_generate_params(params = {})
-    chunk_size = if params[:chunk_size]
-                    .to_i.zero?
-                   Setting.chunk_size
-                 else params[:chunk_size].to_i
-                 end
+    chunk_size =
+      if params[:chunk_size]
+         .to_i.zero?
+        Setting.chunk_size
+      else params[:chunk_size].to_i
+      end
 
     output_size = if params[:output_size]
                      .to_i.zero?

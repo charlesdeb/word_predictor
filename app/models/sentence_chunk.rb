@@ -19,31 +19,24 @@ class SentenceChunk < ApplicationRecord
     # according to how many unique chunks we got for the previous chunk_size
     chunk_sizes = CHUNK_SIZE_RANGE
 
-    # break the text_sample up into tokens
-    text_sample_tokens = split_into_tokens(text_sample.text)
-    # puts text_sample_tokens.join
+    # break the text_sample up into an array of token IDs
+    text_sample_token_ids = Token.id_ise(text_sample.text, :sentence)
 
     chunk_sizes.each do |chunk_size|
-      unless text_sample_tokens.size < chunk_size
-        count_chunks_of_size(text_sample_tokens, text_sample.id, chunk_size)
-      end
-    end
-  end
+      next if text_sample_token_ids.size < chunk_size
 
-  # TODO: maybe this should go into some helper method?
-  # 'hey, man!'  -> ["hey", ",", " ", "man", "!"]
-  #
-  # we could make this simpler just by breaking on spaces and ditching
-  # punctuation eg 'hey, man!' -> ["hey", "man"]
-  # text_sample_tokens = text_sample.text
-  #                                 .split(/\s|\p{Punct}/)
-  #                                 .compact
-  #                                 .reject(&:empty?)
-  def self.split_into_tokens(text)
-    text
-      .split(/(\s)|(\p{Punct})/)
-      .compact
-      .reject(&:empty?)
+      count_chunks_of_size(text_sample_token_ids, text_sample.id, chunk_size)
+    end
+
+    # # break the text_sample up into tokens
+    # text_sample_tokens = split_into_tokens(text_sample.text)
+    # # puts text_sample_tokens.join
+
+    # chunk_sizes.each do |chunk_size|
+    #   next if text_sample_tokens.size < chunk_size
+
+    #   count_chunks_of_size(text_sample_tokens, text_sample.id, chunk_size)
+    # end
   end
 
   def self.count_chunks_of_size(
@@ -67,4 +60,18 @@ class SentenceChunk < ApplicationRecord
   end
 
   def self.save_chunks(chunk_hash, text_sample_id, chunk_size, save_strategy); end
+
+  def self.save_chunks_by_insert_all(chunks_hash, text_sample, chunk_size)
+    # current_time = DateTime.now
+    # import_array = []
+    # chunks_hash.each do |chunk_text, count|
+    #   import_hash = {
+    #     text: chunk_text, size: chunk_size,
+    #     count: count, text_sample_id: text_sample.id,
+    #     created_at: current_time, updated_at: current_time
+    #   }
+    #   import_array << import_hash
+    # end
+    # WordChunk.insert_all import_array
+  end
 end

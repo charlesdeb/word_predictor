@@ -173,118 +173,119 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
     end
   end
 
-  #   let(:long_string) do
-  #     <<~LONG.strip
-  #       The rain in Spain falls mainly in the plain, but we do not really
-  #       know what we are missing in this much longer sentence. Will it
-  #       make a massive difference to the import time, or am I just
-  #       doing premature optimisation which by common consent is largely
-  #       seen as a waste of time. But here we go, adding a bunch more text
-  #       to see if the extra overhead of text will make the slightest bit of
-  #       difference to the import time. Right now, I am not convinced, but
-  #       who knows. The best way to know is always to measure and then
-  #       measure again - checking the hypothesis against the actual results
-  #       of the test.
-  #     LONG
-  #   end
-  #   let(:text_sample) do
-  #     TextSample.create!(description: 'Longer sample', text: long_string)
-  #   end
+  describe '::save_chunks' do # rubocop:disable Metrics/BlockLength
+    let(:long_string) do
+      <<~LONG.strip
+        The rain in Spain falls mainly in the plain, but we do not really
+        know what we are missing in this much longer sentence. Will it
+        make a massive difference to the import time, or am I just
+        doing premature optimisation which by common consent is largely
+        seen as a waste of time. But here we go, adding a bunch more text
+        to see if the extra overhead of text will make the slightest bit of
+        difference to the import time. Right now, I am not convinced, but
+        who knows. The best way to know is always to measure and then
+        measure again - checking the hypothesis against the actual results
+        of the test.
+      LONG
+    end
+    let(:text_sample) do
+      TextSample.create!(description: 'Longer sample', text: long_string)
+    end
 
-  #   describe '[behaviour]' do
-  #     let(:chunk_size) { 2 }
-  #     let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+    describe '[behaviour]' do
+      let(:chunk_size) { 2 }
+      let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
 
-  #     before(:each) do
-  #       allow(SentenceChunk).to receive(:save_chunks_by_insert_all)
-  #       allow(SentenceChunk).to receive(:save_chunks_by_create)
-  #     end
+      before(:each) do
+        allow(SentenceChunk).to receive(:save_chunks_by_insert_all)
+        # allow(SentenceChunk).to receive(:save_chunks_by_create)
+      end
 
-  #     it 'raises an exception for an unknown save_strategy' do
-  #       expect do
-  #         SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size, :bogus_strategy)
-  #       end
-  #         .to raise_exception(/Unknown save_strategy/)
-  #     end
+      it 'raises an exception for an unknown save_strategy' do
+        expect do
+          SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size, :bogus_strategy)
+        end
+          .to raise_exception(/Unknown save_strategy/)
+      end
 
-  #     it 'uses :insert_all as the default strategy' do
-  #       SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size)
-  #       expect(SentenceChunk).to have_received(:save_chunks_by_insert_all)
-  #     end
+      #     it 'uses :insert_all as the default strategy' do
+      #       SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size)
+      #       expect(SentenceChunk).to have_received(:save_chunks_by_insert_all)
+      #     end
 
-  #     it 'uses :insert_all when instructed' do
-  #       SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
-  #       expect(SentenceChunk).to have_received(:save_chunks_by_insert_all)
-  #     end
+      #     it 'uses :insert_all when instructed' do
+      #       SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+      #       expect(SentenceChunk).to have_received(:save_chunks_by_insert_all)
+      #     end
 
-  #     it 'uses :create! when instructed' do
-  #       SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size, :create!)
-  #       expect(SentenceChunk).to have_received(:save_chunks_by_create)
-  #     end
-  #   end
-  #     around(:each) do |example|
-  #       start_time = DateTime.now
+      #     it 'uses :create! when instructed' do
+      #       SentenceChunk.save_chunks(chunks_hash, text_sample, chunk_size, :create!)
+      #       expect(SentenceChunk).to have_received(:save_chunks_by_create)
+      #     end
+      #   end
+      #     around(:each) do |example|
+      #       start_time = DateTime.now
 
-  #       example.run
+      #       example.run
 
-  #       seconds_elapsed = (DateTime.now - start_time) * 1000.0
-  #       chunk_size = example.metadata[:chunk_size]
-  #       puts "saving chunks (size #{chunk_size} took #{seconds_elapsed} seconds"
-  #     end
+      #       seconds_elapsed = (DateTime.now - start_time) * 1000.0
+      #       chunk_size = example.metadata[:chunk_size]
+      #       puts "saving chunks (size #{chunk_size} took #{seconds_elapsed} seconds"
+      #     end
 
-  #     context 'chunk size of 2', chunk_size: 2 do
-  #       let(:chunk_size) { 2 }
-  #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
-  #       it 'uses insert_all for individual word_chunks' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
-  #       end
-  #       it 'uses individual create! for each word_chunk' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
-  #       end
-  #     end
+      #     context 'chunk size of 2', chunk_size: 2 do
+      #       let(:chunk_size) { 2 }
+      #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+      #       it 'uses insert_all for individual word_chunks' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+      #       end
+      #       it 'uses individual create! for each word_chunk' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
+      #       end
+      #     end
 
-  #     context 'chunk size of 3', chunk_size: 3 do
-  #       let(:chunk_size) { 3 }
-  #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
-  #       it 'uses insert_all for individual word_chunks' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
-  #       end
-  #       it 'uses individual create! for each word_chunk' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
-  #       end
-  #     end
+      #     context 'chunk size of 3', chunk_size: 3 do
+      #       let(:chunk_size) { 3 }
+      #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+      #       it 'uses insert_all for individual word_chunks' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+      #       end
+      #       it 'uses individual create! for each word_chunk' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
+      #       end
+      #     end
 
-  #     context 'chunk size of 4', chunk_size: 4 do
-  #       let(:chunk_size) { 4 }
-  #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
-  #       it 'uses insert_all for individual word_chunks' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
-  #       end
-  #       it 'uses individual create! for each word_chunk' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
-  #       end
-  #     end
+      #     context 'chunk size of 4', chunk_size: 4 do
+      #       let(:chunk_size) { 4 }
+      #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+      #       it 'uses insert_all for individual word_chunks' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+      #       end
+      #       it 'uses individual create! for each word_chunk' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
+      #       end
+      #     end
 
-  #     context 'chunk size of 8', chunk_size: 8 do
-  #       let(:chunk_size) { 8 }
-  #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
-  #       it 'uses insert_all for individual word_chunks' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
-  #       end
-  #       it 'uses individual create! for each word_chunk' do
-  #         SentenceChunk
-  #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
-  #       end
-  #     end
-  #   end
-  # end
+      #     context 'chunk size of 8', chunk_size: 8 do
+      #       let(:chunk_size) { 8 }
+      #       let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+      #       it 'uses insert_all for individual word_chunks' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+      #       end
+      #       it 'uses individual create! for each word_chunk' do
+      #         SentenceChunk
+      #           .save_chunks(chunks_hash, text_sample, chunk_size, :create!)
+      #       end
+      #     end
+    end
+  end
 
   # describe '::save_chunks_by_insert_all' do
   #   let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'ant') }

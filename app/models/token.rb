@@ -50,11 +50,25 @@ class Token < ApplicationRecord
     Token.insert_all unique_text_tokens_import
   end
 
+  # convert an array of text tokens to an array of token ids
+  #
+  # @param [Array] text_tokens
   def self.replace_tokens_with_token_ids(text_tokens)
     text_tokens.map do |token|
       Token.where({ token: token }).first.id
     rescue NoMethodError
       raise StandardError, "Unknown token (#{token}). You may need to reanalyse the source text"
+    end
+  end
+
+  # convert an array of token ids to an array of text tokens
+  #
+  # @param [Array] token_ids
+  def self.replace_token_ids_with_tokens(token_ids)
+    token_ids.map do |token_id|
+      Token.where({ id: token_id }).first.token
+    rescue NoMethodError
+      raise StandardError, "Unknown token id(#{token_id}). You may need to reanalyse the source text"
     end
   end
 end

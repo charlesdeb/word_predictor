@@ -135,4 +135,30 @@ RSpec.describe Token, type: :model do # rubocop:disable Metrics/BlockLength
       expect { Token.replace_tokens_with_token_ids(text_tokens) }.to raise_error(/Unknown token/)
     end
   end
+
+  describe '::replace_token_ids_with_tokens' do
+    before(:each) do
+      current_time = DateTime.now
+      Token.create!({ id: 1, token: 'the', created_at: current_time })
+      Token.create!({ id: 2, token: ' ', created_at: current_time })
+      Token.create!({ id: 3, token: 'hat', created_at: current_time })
+    end
+
+    it 'works' do
+      text_token_ids = [1, 2, 3]
+      result = Token.replace_token_ids_with_tokens(text_token_ids)
+      expect(result).to eq(['the', ' ', 'hat'])
+    end
+
+    it 'handles duplicates' do
+      text_token_ids = [1, 2, 3, 2, 3]
+      result = Token.replace_token_ids_with_tokens(text_token_ids)
+      expect(result).to eq(['the', ' ', 'hat', ' ', 'hat'])
+    end
+
+    it 'handles missing tokens' do
+      text_token_ids = [1, 2, 4]
+      expect { Token.replace_token_ids_with_tokens(text_token_ids) }.to raise_error(/Unknown token id/)
+    end
+  end
 end

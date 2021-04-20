@@ -195,6 +195,7 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
     let(:text_sample) do
       TextSample.create!(description: 'Longer sample', text: long_string)
     end
+    let(:text_sample_token_ids) { Token.id_ise(text_sample.text, :sentence) }
 
     describe '[behaviour]' do
       let(:chunk_size) { 2 }
@@ -236,10 +237,10 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
 
       context 'chunk size of 2', chunk_size: 2 do
         let(:chunk_size) { 2 }
-        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample_token_ids, chunk_size) }
         it 'uses insert_all for individual sentence_chunks' do
           SentenceChunk
-            .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+            .save_chunks(chunks_hash, text_sample.id, chunk_size, :insert_all)
         end
 
         # it 'uses individual create! for each sentence_chunk' do
@@ -250,10 +251,10 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
 
       context 'chunk size of 3', chunk_size: 3 do
         let(:chunk_size) { 3 }
-        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample_token_ids, chunk_size) }
         it 'uses insert_all for individual sentence_chunks' do
           SentenceChunk
-            .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+            .save_chunks(chunks_hash, text_sample.id, chunk_size, :insert_all)
         end
         # it 'uses individual create! for each sentence_chunk' do
         #   SentenceChunk
@@ -263,10 +264,10 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
 
       context 'chunk size of 4', chunk_size: 4 do
         let(:chunk_size) { 4 }
-        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample_token_ids, chunk_size) }
         it 'uses insert_all for individual sentence_chunks' do
           SentenceChunk
-            .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+            .save_chunks(chunks_hash, text_sample.id, chunk_size, :insert_all)
         end
         # it 'uses individual create! for each sentence_chunk' do
         #   SentenceChunk
@@ -276,10 +277,10 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
 
       context 'chunk size of 8', chunk_size: 8 do
         let(:chunk_size) { 8 }
-        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample.text, chunk_size) }
+        let(:chunks_hash) { SentenceChunk.build_chunks_hash(text_sample_token_ids, chunk_size) }
         it 'uses insert_all for individual sentence_chunks' do
           SentenceChunk
-            .save_chunks(chunks_hash, text_sample, chunk_size, :insert_all)
+            .save_chunks(chunks_hash, text_sample.id, chunk_size, :insert_all)
         end
         # it 'uses individual create! for each sentence_chunk' do
         #   SentenceChunk
@@ -306,271 +307,304 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
     end
   end
 
-  #   let(:text_sample) do
-  #     TextSample.create!(description: 'Stuff', text: 'another man')
-  #   end
-  #   let(:chunk_size) { 3 }
-  #   let(:output_size) { 5 }
-  #   let(:generate_params) do
-  #     { chunk_size: chunk_size,
-  #       output_size: output_size,
-  #       text_sample_id: text_sample.id }
-  #   end
+  describe '::generate' do # rubocop:disable Metrics/BlockLength
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
+    let(:chunk_size) { 3 }
+    let(:token_size) { 5 }
 
-  #   it 'checks whether SentenceChunks have been generated for given TextSample' do
-  #     allow(SentenceChunk).to receive(:chunks_built_for?)
-  #     SentenceChunk.generate generate_params
-  #     expect(SentenceChunk).to have_received(:chunks_built_for?)
-  #   end
+    let(:generate_params) do
+      { chunk_size: chunk_size,
+        token_size: token_size,
+        text_sample_id: text_sample.id }
+    end
 
-  #   context 'SentenceChunks have not been generated' do
-  #     it 'returns a warning' do
-  #       allow(SentenceChunk).to receive(:chunks_built_for?).and_return(false)
-  #       result = SentenceChunk.generate generate_params
-  #       expect(result[:message])
-  #         .not_to be(nil)
-  #       expect(result[:message])
-  #         .to match(/Word chunks have not been built for this text sample/)
-  #     end
-  #   end
-  #     let(:generated_text) { 'some text' }
-  #     before(:each) do
-  #       allow(SentenceChunk).to receive(:chunks_built_for?).and_return(true)
-  #       allow(SentenceChunk)
-  #         .to receive(:generate_text)
-  #         .and_return({ text: generated_text, chunk_size: chunk_size })
-  #       allow(SentenceChunk)
-  #         .to receive(:extract_generate_params)
-  #         .and_return([chunk_size, output_size, text_sample.id])
-  #     end
+    it 'checks whether SentenceChunks have been generated for given TextSample' do
+      allow(SentenceChunk).to receive(:chunks_built_for?)
+      allow(SentenceChunk).to receive(:generate_text)
+        .and_return({ text: 'some generated text',
+                      chunk_size: 'some size' })
+      SentenceChunk.generate generate_params
+      expect(SentenceChunk).to have_received(:chunks_built_for?)
+    end
 
-  #     it 'extracts generate parameters' do
-  #       # allow(SentenceChunk)
-  #       #   .to receive(:extract_generate_params)
-  #       #   .and_return([output_size, chunk_size, text_sample.id])
+    context 'SentenceChunks have not been generated' do
+      it 'returns a warning' do
+        allow(SentenceChunk).to receive(:chunks_built_for?)
+          .with(anything)
+          .and_return(false)
+        result = SentenceChunk.generate generate_params
+        expect(result[:message])
+          .not_to be(nil)
+        expect(result[:message])
+          .to match(/Sentence chunks have not been built for this text sample/)
+      end
+    end
 
-  #       SentenceChunk.generate generate_params
+    context 'SentenceChunks have been generated' do # rubocop:disable Metrics/BlockLength
+      let(:generated_token_ids) { [1, 2, 3] }
+      let(:generated_tokens) { ['some', ' ', 'text'] }
+      let(:generated_text) { 'some text' }
+      before(:each) do
+        allow(SentenceChunk).to receive(:chunks_built_for?).and_return(true)
+        allow(SentenceChunk)
+          .to receive(:generate_text)
+          .and_return({ text: generated_text, chunk_size: chunk_size })
+        allow(SentenceChunk)
+          .to receive(:extract_generate_params)
+          .and_return([chunk_size, token_size, text_sample.id])
+        # allow(Token)
+        #   .to receive(:replace_token_ids_with_tokens)
+        #   .and_return(generated_tokens)
+      end
 
-  #       expect(SentenceChunk)
-  #         .to have_received(:extract_generate_params)
-  #     end
+      it 'extracts generate parameters' do
+        SentenceChunk.generate generate_params
 
-  #     context 'for one chunk_size' do
-  #       let(:generation_result) do
-  #         { output: [{ text: generated_text, chunk_size: chunk_size }] }
-  #       end
+        expect(SentenceChunk)
+          .to have_received(:extract_generate_params)
+      end
 
-  #       it 'generates the text' do
-  #         SentenceChunk.generate generate_params
-  #         expect(SentenceChunk)
-  #           .to have_received(:generate_text)
-  #           .with(chunk_size, output_size, text_sample.id)
-  #       end
+      context 'for one chunk_size' do
+        let(:generation_result) do
+          { output: [{ text: generated_text, chunk_size: chunk_size }] }
+        end
 
-  #       it 'returns a hash with the generated text' do
-  #         result = SentenceChunk.generate generate_params
+        it 'generates the tokens' do
+          SentenceChunk.generate generate_params
+          expect(SentenceChunk)
+            .to have_received(:generate_text)
+            .with(chunk_size, token_size, text_sample.id)
+        end
 
-  #         expect(result).to eq(generation_result)
-  #       end
-  #     end
+        it 'returns a hash with the generated text' do
+          result = SentenceChunk.generate generate_params
 
-  #     context 'for all chunk_sizes' do
-  #       let(:chunk_size) { 'all' }
-  #       let(:generate_params) do
-  #         { chunk_size: :chunk_size,
-  #           output_size: output_size,
-  #           text_sample_id: text_sample.id }
-  #       end
+          expect(result).to eq(generation_result)
+        end
+      end
 
-  #       before(:each) do
-  #         allow(SentenceChunk)
-  #           .to receive(:extract_generate_params)
-  #           .and_return([chunk_size, output_size, text_sample.id])
-  #       end
+      context 'for all chunk_sizes' do
+        let(:chunk_size) { 'all' }
+        let(:generate_params) do
+          { chunk_size: :chunk_size,
+            token_size: token_size,
+            text_sample_id: text_sample.id }
+        end
 
-  #       it 'generates the right number of texts' do
-  #         SentenceChunk.generate generate_params
-  #         expect(SentenceChunk)
-  #           .to have_received(:generate_text)
-  #           .exactly(SentenceChunk::CHUNK_SIZE_RANGE.size).times
-  #       end
+        before(:each) do
+          allow(SentenceChunk)
+            .to receive(:extract_generate_params)
+            .and_return([chunk_size, token_size, text_sample.id])
+        end
 
-  #       it 'returns a hash with the generated text' do
-  #         result = SentenceChunk.generate generate_params
+        it 'generates the right number of texts' do
+          SentenceChunk.generate generate_params
+          expect(SentenceChunk)
+            .to have_received(:generate_text)
+            .exactly(SentenceChunk::CHUNK_SIZE_RANGE.size).times
+        end
 
-  #         expect(result[:output].size).to eq(SentenceChunk::CHUNK_SIZE_RANGE.size)
-  #       end
-  #     end
-  #   end
-  # end
+        it 'returns a hash with the generated text' do
+          result = SentenceChunk.generate generate_params
 
-  # describe '::extract_generate_params' do
-  #   let(:text_sample) do
-  #     TextSample.create!(description: 'Stuff', text: 'another man')
-  #   end
-  #   let(:chunk_size) { 3 }
-  #   let(:output_size) { 5 }
-  #   let(:generate_params) do
-  #     { chunk_size: chunk_size,
-  #       output_size: output_size,
-  #       text_sample_id: text_sample.id }
-  #   end
+          expect(result[:output].size).to eq(SentenceChunk::CHUNK_SIZE_RANGE.size)
+        end
+      end
+    end
+  end
 
-  #   it 'uses default chunk_size and output size if no params provided' do
-  #     e_chunk_size, e_output_size = SentenceChunk.extract_generate_params
+  describe '::chunks_built_for?' do
+    it 'returns true if built' do
+      allow(SentenceChunk).to receive(:find_by).and_return 'something'
 
-  #     expect(e_chunk_size).to eq(Setting.chunk_size)
-  #     expect(e_output_size).to eq(Setting.output_size)
-  #   end
+      expect(SentenceChunk.chunks_built_for?(-100)).to be true
+    end
 
-  #   it 'extracts params' do
-  #     e_chunk_size, e_output_size, e_text_sample_id = SentenceChunk
-  #                                                     .extract_generate_params generate_params
+    it 'returns false if not built' do
+      allow(SentenceChunk).to receive(:find_by).and_return nil
 
-  #     expect(e_chunk_size).to eq(chunk_size)
-  #     expect(e_output_size).to eq(output_size)
-  #     expect(e_text_sample_id).to eq(text_sample.id)
-  #   end
-  # end
-  #   let(:text_sample) do
-  #     TextSample.create!(description: 'Stuff', text: 'another man')
-  #   end
+      expect(SentenceChunk.chunks_built_for?(-100)).to be false
+    end
+  end
 
-  #   let(:chunk_size) { 3 }
-  #   let(:output_size) { 5 }
-  #   let(:sentence_chunk) { double('SentenceChunk') }
+  describe '::extract_generate_params' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'another man') }
+    let(:chunk_size) { 3 }
+    let(:token_size) { 5 }
+    let(:generate_params) do
+      { chunk_size: chunk_size,
+        token_size: token_size,
+        text_sample_id: text_sample.id }
+    end
 
-  #   before(:each) do
-  #     allow(SentenceChunk)
-  #       .to receive(:choose_starting_chunk).and_return(sentence_chunk)
-  #     allow(sentence_chunk)
-  #       .to receive(:text).and_return('abc')
-  #     allow(sentence_chunk)
-  #       .to receive(:choose_next_chunk).and_return(sentence_chunk)
-  #   end
+    it 'uses default chunk_size and token_size if no params provided' do
+      e_chunk_size, e_token_size = SentenceChunk.extract_generate_params
 
-  #   it 'chooses a starting chunk' do
-  #     SentenceChunk.generate_text(chunk_size, output_size, text_sample.id)
+      expect(e_chunk_size).to eq(Setting.chunk_size)
+      expect(e_token_size).to eq(Setting.token_size)
+    end
 
-  #     expect(SentenceChunk)
-  #       .to(have_received(:choose_starting_chunk)
-  #       .with(text_sample.id, chunk_size))
-  #   end
+    it 'extracts params' do
+      e_chunk_size, e_token_size, e_text_sample_id = SentenceChunk
+                                                     .extract_generate_params generate_params
 
-  #   it 'generates the right number of extra tokens' do
-  #     SentenceChunk.generate_text(chunk_size, output_size, text_sample.id)
+      expect(e_chunk_size).to eq(chunk_size)
+      expect(e_token_size).to eq(token_size)
+      expect(e_text_sample_id).to eq(text_sample.id)
+    end
+  end
 
-  #     expect(sentence_chunk)
-  #       .to(have_received(:choose_next_chunk).twice)
-  #   end
+  describe '::generate_text' do # rubocop:disable Metrics/BlockLength
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'another man')
+    end
 
-  #   it 'returns the right length of output text' do
-  #     result = SentenceChunk.generate_text(chunk_size, output_size, text_sample.id)
+    let(:chunk_size) { 3 }
+    let(:token_size) { 5 }
+    let(:sentence_chunk) { double('SentenceChunk') }
 
-  #     expect(result[:text].size).to eq(5)
-  #   end
+    before(:each) do
+      allow(SentenceChunk)
+        .to receive(:choose_starting_chunk).and_return(sentence_chunk)
+      allow(sentence_chunk)
+        .to receive(:token_ids).and_return([1, 2, 3])
+      allow(sentence_chunk)
+        .to receive(:choose_next_chunk).and_return(sentence_chunk)
+      allow(Token)
+        .to receive(:replace_token_ids_with_tokens)
+        .and_return(['another', ' ', 'man'])
+    end
 
-  #   it 'returns a hash with the right keys' do
-  #     result = SentenceChunk.generate_text(chunk_size, output_size, text_sample.id)
-  #     expect(result).to have_key(:chunk_size)
-  #     expect(result).to have_key(:text)
-  #   end
-  # end
+    it 'chooses a starting chunk' do
+      SentenceChunk.generate_text(chunk_size, token_size, text_sample.id)
 
-  # describe '::choose_starting_chunk' do
-  #   let(:chunk_size) { 3 }
-  #   let(:text_sample) do
-  #     TextSample.create!(description: 'Stuff', text: 'mice')
-  #   end
+      expect(SentenceChunk)
+        .to(have_received(:choose_starting_chunk)
+        .with(text_sample.id, chunk_size))
+    end
 
-  #   before(:each) do
-  #     SentenceChunk.count_chunks(text_sample, chunk_size)
-  #   end
+    it 'generates the right number of extra tokens' do
+      SentenceChunk.generate_text(chunk_size, token_size, text_sample.id)
 
-  #   it 'all SentenceChunks are potential candidates' do
-  #     candidates = %w[mic ice]
+      expect(sentence_chunk)
+        .to(have_received(:choose_next_chunk).twice)
+    end
 
-  #     # if we run this 100 times, it's pretty unlikely we won't get both of
-  #     # these
-  #     100.times do
-  #       candidate = SentenceChunk.choose_starting_chunk(
-  #         text_sample.id, chunk_size
-  #       )
-  #       candidates.delete(candidate.text) if candidates.include?(candidate.text)
-  #       break if candidates.empty?
-  #     end
-  #     expect(candidates).to eq([])
-  #   end
+    it 'returns a hash with the right keys' do
+      result = SentenceChunk.generate_text(chunk_size, token_size, text_sample.id)
+      expect(result).to have_key(:chunk_size)
+      expect(result).to have_key(:text)
+    end
+  end
 
-  #   it 'returns a SentenceChunk' do
-  #     result = SentenceChunk.choose_starting_chunk(text_sample.id, chunk_size)
-  #     expect(result).to be_instance_of(SentenceChunk)
-  #   end
-  # end
+  describe '::choose_starting_chunk' do
+    let(:chunk_size) { 3 }
+    let(:text_sample) do
+      TextSample.create!(description: 'Stuff', text: 'take me to the river')
+    end
+    let(:text_sample_token_ids) { Token.id_ise(text_sample.text, :sentence) }
 
-  # describe '#choose_next_chunk' do
-  #   let(:where_chain) { double('WhereChain') }
-  #   let(:sentence_chunk) { create(:sentence_chunk) }
-  #   let(:candidates) { double('candidates') }
+    before(:each) do
+      SentenceChunk.count_chunks(text_sample_token_ids, text_sample.id, chunk_size)
+    end
 
-  #   before(:each) do
-  #     allow(SentenceChunk).to receive(:choose_chunk_from_candidates)
-  #     allow(SentenceChunk)
-  #       .to receive(:where).and_return(where_chain)
+    it 'all SentenceChunks are potential candidates' do
+      candidates = ['take me', ' me ', 'me to', ' to ', 'to the', ' the ', 'the river']
 
-  #     allow(where_chain).to receive(:limit).and_return(candidates)
+      # if we run this 100 times, it's pretty unlikely we won't get both of
+      # these chunks
+      100.times do
+        candidate_token_ids = SentenceChunk.choose_starting_chunk(
+          text_sample.id, chunk_size
+        ).token_ids
+        candidate_text = Token.replace_token_ids_with_tokens(candidate_token_ids).join
+        candidates.delete(candidate_text) if candidates.include?(candidate_text)
+        break if candidates.empty?
+      end
+      expect(candidates).to eq([])
+    end
 
-  #     sentence_chunk.choose_next_chunk
-  #   end
+    it 'returns a SentenceChunk' do
+      result = SentenceChunk.choose_starting_chunk(text_sample.id, chunk_size)
+      expect(result).to be_instance_of(SentenceChunk)
+    end
+  end
 
-  #   it 'finds candidate word chunks' do
-  #     expect(SentenceChunk)
-  #       .to(have_received(:where)
-  #       .with('text_sample_id = :text_sample_id AND size = :sentence_chunk_size AND text LIKE :chunk_head',
-  #             { chunk_head: 't%', text_sample_id: sentence_chunk.text_sample_id,
-  #               sentence_chunk_size: 2 }))
-  #   end
+  describe '#choose_next_chunk' do
+    let(:where_chain) { double('WhereChain') }
+    let(:sentence_chunk) { create(:sentence_chunk) }
+    let(:candidates) { double('candidates') }
 
-  #   it 'chooses word chunk from candidates' do
-  #     expect(SentenceChunk)
-  #       .to(
-  #         have_received(:choose_chunk_from_candidates).with(candidates)
-  #       )
-  #   end
-  # end
+    before(:each) do
+      allow(SentenceChunk).to receive(:choose_chunk_from_candidates)
+      allow(SentenceChunk)
+        .to receive(:where).and_return(where_chain)
 
-  # describe '::choose_chunk_from_candidates' do
-  #   let(:counts_array) { [build(:sentence_chunk), build(:sentence_chunk)] }
-  #   let(:candidates) { double('candidates') }
+      allow(where_chain).to receive(:limit).and_return(candidates)
 
-  #   before(:each) do
-  #     allow(SentenceChunk)
-  #       .to receive(:build_counts_array).and_return(counts_array)
-  #   end
+      sentence_chunk.choose_next_chunk
+    end
 
-  #   it 'calculates probabilities of each word chunk' do
-  #     SentenceChunk.choose_chunk_from_candidates(candidates)
+    it 'finds candidate sentence chunks' do
+      expect(SentenceChunk)
+        .to(have_received(:where)
+        .with('text_sample_id = :text_sample_id AND size = :sentence_chunk_size AND token_ids[0] = 2',
+              { text_sample_id: sentence_chunk.text_sample_id,
+                sentence_chunk_size: 2 }))
+    end
 
-  #     expect(SentenceChunk)
-  #       .to(have_received(:build_counts_array).with(candidates))
-  #   end
+    it 'chooses word chunk from candidates' do
+      expect(SentenceChunk)
+        .to(
+          have_received(:choose_chunk_from_candidates).with(candidates)
+        )
+    end
+  end
 
-  #   it 'selects a word chunk' do
-  #     new_chunk = SentenceChunk.choose_chunk_from_candidates(candidates)
+  describe '::choose_chunk_from_candidates' do
+    let(:counts_array) { [build(:sentence_chunk), build(:sentence_chunk)] }
+    let(:candidates) { double('candidates') }
 
-  #     expect(new_chunk).to be_instance_of(SentenceChunk)
-  #   end
-  # end
+    before(:each) do
+      allow(SentenceChunk)
+        .to receive(:build_counts_array).and_return(counts_array)
+    end
 
-  # describe '::build_counts_array' do
-  #   let!(:sentence_chunk_at) { create(:sentence_chunk, text: 'at', count: 2) }
-  #   let!(:sentence_chunk_an) { create(:sentence_chunk, text: 'an', count: 1) }
-  #   let(:candidates) { SentenceChunk.all }
+    it 'calculates probabilities of each word chunk' do
+      SentenceChunk.choose_chunk_from_candidates(candidates)
 
-  #   it 'has the right number of elements' do
-  #     counts_array = SentenceChunk.build_counts_array(candidates)
+      expect(SentenceChunk)
+        .to(have_received(:build_counts_array).with(candidates))
+    end
 
-  #     expect(counts_array.size).to eq(3)
-  #   end
-  # end
+    it 'selects a word chunk' do
+      new_chunk = SentenceChunk.choose_chunk_from_candidates(candidates)
+
+      expect(new_chunk).to be_instance_of(SentenceChunk)
+    end
+  end
+
+  describe '::build_counts_array' do
+    let!(:sentence_chunk_1_2) { create(:sentence_chunk, token_ids: [1, 2], count: 2) } # rubocop:disable Naming/VariableNumber
+    let!(:sentence_chunk_1_3) { create(:sentence_chunk, token_ids: [1, 3], count: 1) } # rubocop:disable Naming/VariableNumber
+    let(:candidates) { SentenceChunk.all }
+
+    it 'has the right number of elements' do
+      counts_array = SentenceChunk.build_counts_array(candidates)
+
+      expect(counts_array.size).to eq(3)
+    end
+  end
+
+  describe '#to_tokens' do
+    it 'converts an array of token ids to the text of the tokens' do
+      text_sample = TextSample.create!(description: 'Stuff', text: 'take me to the river')
+      text_sample.analyse
+
+      sentence_chunk = SentenceChunk.where("text_sample_id = #{text_sample.id}").first
+      expect(sentence_chunk.to_tokens).to eq(['take', ' '])
+    end
+  end
 end

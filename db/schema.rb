@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_14_221302) do
+ActiveRecord::Schema.define(version: 2021_04_17_225204) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -19,12 +19,11 @@ ActiveRecord::Schema.define(version: 2021_04_14_221302) do
     t.integer "size", null: false
     t.integer "count", null: false
     t.bigint "text_sample_id", null: false
-    t.string "token_ids"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "token_ids", array: true
     t.index ["size"], name: "index_sentence_chunks_on_size"
     t.index ["text_sample_id"], name: "index_sentence_chunks_on_text_sample_id"
-    t.index ["token_ids"], name: "index_sentence_chunks_on_token_ids"
   end
 
   create_table "settings", force: :cascade do |t|

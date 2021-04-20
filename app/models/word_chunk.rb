@@ -61,7 +61,9 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     end
   end
 
-  def self.save_word_chunks_by_insert_all(chunks_hash, text_sample, chunk_size)
+  def self.save_word_chunks_by_insert_all( # rubocop:disable Metrics/MethodLength
+    chunks_hash, text_sample, chunk_size
+  )
     current_time = DateTime.now
     import_array = []
     chunks_hash.each do |chunk_text, count|

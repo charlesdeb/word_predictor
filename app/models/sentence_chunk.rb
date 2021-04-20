@@ -5,14 +5,14 @@
 
 # for a Sentence Chunk, a 'chunk' is an ordered collection of words, spaces and
 # punctuation (all called tokens)
-class SentenceChunk < ApplicationRecord
+class SentenceChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :text_sample
 
-  validates :token_ids, presence: true # may normalise this later, or convert to a serializable column type
+  validates :token_ids, presence: true # may normalise this later
   validates :size, presence: true
   validates :count, presence: true
 
-  serialize(:token_ids, Array)
+  # serialize(:token_ids, Array)
 
   CHUNK_SIZE_RANGE = (2..8).freeze
 
@@ -66,7 +66,7 @@ class SentenceChunk < ApplicationRecord
     end
   end
 
-  def self.save_chunks_by_insert_all(  # rubocop:disable Metrics/MethodLength
+  def self.save_chunks_by_insert_all( # rubocop:disable Metrics/MethodLength
     chunks_hash, text_sample_id, chunk_size
   )
     current_time = DateTime.now
@@ -83,5 +83,115 @@ class SentenceChunk < ApplicationRecord
       import_array << import_hash
     end
     SentenceChunk.insert_all! import_array
+  end
+
+  # Entry point for generating text using the sentence chunk strategy
+  #
+  # @param [Hash] params parameters to generate with
+  # @option [Integer] chunk_size chunk size to use for generation
+  # @option [Integer] token_size number of tokens to generate
+  # @option [Integer] text_sample_id TextSample to use as the model
+  def self.generate(params = {}) # rubocop:disable Metrics/MethodLength
+    unless chunks_built_for? params[:text_sample_id]
+      return { message: 'Sentence chunks have not been built for this text sample' }
+    end
+
+    chunk_size, token_size, text_sample_id = extract_generate_params(params)
+
+    output = []
+
+    if chunk_size == 'all'
+      CHUNK_SIZE_RANGE.each do |current_chunk_size|
+        output.push(generate_text(current_chunk_size, token_size, text_sample_id))
+      end
+    else
+      output.push(generate_text(chunk_size, token_size, text_sample_id))
+    end
+
+    { output: output }
+  end
+
+  # Helper method that pulls individual parameters out of params or sets
+  # reasonable defaults
+  # @param (see ::generate)
+  def self.extract_generate_params(params = {})
+    chunk_size =
+      if params[:chunk_size]
+         .to_i.zero?
+        Setting.chunk_size
+      else params[:chunk_size].to_i
+      end
+
+    token_size = if params[:token_size]
+                    .to_i.zero?
+                   Setting.token_size else params[:token_size].to_i end
+
+    [chunk_size, token_size, params[:text_sample_id]]
+  end
+
+  def self.chunks_built_for?(text_sample_id)
+    !SentenceChunk.find_by(text_sample_id: text_sample_id).nil?
+  end
+
+  def self.generate_text(chunk_size, token_size, text_sample_id)
+    chunk = choose_starting_chunk(text_sample_id, chunk_size)
+
+    output_token_ids = chunk.token_ids
+    while output_token_ids.size < token_size
+      chunk = chunk.choose_next_chunk
+      next_token_id = chunk.token_ids[-1]
+      output_token_ids << next_token_id
+    end
+
+    output = Token.replace_token_ids_with_tokens(output_token_ids).join
+
+    { text: output, chunk_size: chunk_size }
+  end
+
+  def self.choose_starting_chunk(text_sample_id, chunk_size)
+    candidates = SentenceChunk
+                 .where({ text_sample_id: text_sample_id, size: chunk_size })
+                 .limit(nil)
+    candidates[(rand * candidates.size).to_i]
+  end
+
+  # Choose the next word chunk after this one
+  def choose_next_chunk
+    token_ids_where = []
+
+    # grab all but the first token in the chunk
+    token_ids[1..].map.with_index do |token_id, index|
+      # and build a where clause so that all the tokens in the array match.
+      # Note: PostgreSQL arrays are 1-indexed and not 0-indexed
+      token_ids_where << "token_ids[#{index + 1}] = #{token_id}"
+    end
+    token_ids_where = token_ids_where.join(' AND ')
+
+    candidates = SentenceChunk
+                 .where("text_sample_id = :text_sample_id AND size = :sentence_chunk_size AND #{token_ids_where}",
+                        text_sample_id: text_sample.id, sentence_chunk_size: size)
+                 .limit(nil)
+
+    SentenceChunk.choose_chunk_from_candidates(candidates)
+  end
+
+  def self.choose_chunk_from_candidates(candidates)
+    counts_array = SentenceChunk.build_counts_array(candidates)
+
+    counts_array[(rand * counts_array.size).to_i]
+  end
+
+  def self.build_counts_array(candidates)
+    counts_array = []
+    candidates.each do |chunk|
+      chunk.count.times { counts_array.push(chunk) }
+    end
+    counts_array
+  end
+
+  # helper method for converting an array of token_ids back to an array of
+  # readable text
+  def to_tokens
+    Token.replace_token_ids_with_tokens(token_ids)
   end
 end

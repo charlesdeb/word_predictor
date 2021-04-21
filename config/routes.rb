@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :text_samples do
     member do
       get 'generate'
+      patch 'reanalyse'
     end
   end
 

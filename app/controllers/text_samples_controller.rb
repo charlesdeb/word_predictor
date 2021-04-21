@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TextSamplesController < ApplicationController
-  before_action :set_text_sample, only: %i[show edit update destroy generate]
+  before_action :set_text_sample, only: %i[show edit update destroy generate reanalyse]
 
   # GET /text_samples
   # GET /text_samples.json
@@ -26,7 +26,7 @@ class TextSamplesController < ApplicationController
     generation_result = @text_sample.generate generate_params
 
     if generation_result[:message]
-      flash.now[:notice] = generation_result[:message]
+      flash.now[:warning] = generation_result[:message]
     else
       @generated_texts = generation_result[:output]
     end
@@ -76,6 +76,18 @@ class TextSamplesController < ApplicationController
     end
   end
 
+  # PATCH/PUT /text_samples/1/generate
+  def reanalyse
+    @text_sample.analyse
+    flash.now[:notice] = 'Text sample reanalysed successfully'
+
+    # TODO: change the form_with in the show so that it submits via AJAX. This
+    # method would then return a piece of JS that adds the new text to the DOM
+    respond_to do |format|
+      format.html { render :show }
+    end
+  end
+
   # DELETE /text_samples/1
   # DELETE /text_samples/1.json
   def destroy
@@ -103,6 +115,6 @@ class TextSamplesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def generate_params
-    params.permit(:chunk_size, :output_size, :id)
+    params.permit(:chunk_size, :output_size, :id, :strategy)
   end
 end

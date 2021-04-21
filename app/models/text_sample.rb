@@ -24,9 +24,11 @@ class TextSample < ApplicationRecord
     # add the current text sample to params
     params.merge!({ text_sample_id: id })
 
+    # case params[:strategy]
+    case params[:strategy].to_sym
     # case params['strategy'].parameterize.underscore.to_sym
     # case params.except!(:strategy)
-    case params.extract!(:strategy)
+    # case params.extract!(:strategy).values.first
     when :word_chunk
       { strategy: :word_chunk }.merge(WordChunk.generate(params))
     when :sentence_chunk

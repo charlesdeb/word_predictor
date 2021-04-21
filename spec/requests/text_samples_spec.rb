@@ -125,6 +125,16 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
     end
   end
 
+  describe 'PATCH /reanalyse' do
+    it 'sets success flash' do
+      text_sample = TextSample.create! valid_attributes
+
+      patch reanalyse_text_sample_url(text_sample)
+
+      expect(flash[:notice]).to eq('Text sample reanalysed successfully')
+    end
+  end
+
   describe 'DELETE /destroy' do
     it 'destroys the requested text_sample' do
       text_sample = TextSample.create! valid_attributes

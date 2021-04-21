@@ -122,9 +122,9 @@ class SentenceChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
       else params[:chunk_size].to_i
       end
 
-    token_size = if params[:token_size]
+    token_size = if params[:output_size]
                     .to_i.zero?
-                   Setting.token_size else params[:token_size].to_i end
+                   Setting.token_size else params[:output_size].to_i end
 
     [chunk_size, token_size, params[:text_sample_id]]
   end
@@ -133,12 +133,21 @@ class SentenceChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     !SentenceChunk.find_by(text_sample_id: text_sample_id).nil?
   end
 
+  # Actually generate the text for the given chunk_size and text sample
+  # @param Integer chunk_size chunk size to use for generation
+  # @param Integer token_size number of tokens to generate
+  # @param Integer text_sample_id TextSample to use as the model
+  #
+  # @return Hash with generated text and chunk_size
   def self.generate_text(chunk_size, token_size, text_sample_id)
     chunk = choose_starting_chunk(text_sample_id, chunk_size)
 
     output_token_ids = chunk.token_ids
     while output_token_ids.size < token_size
       chunk = chunk.choose_next_chunk
+      # if we couldn't get a next chunk, then just leave it there
+      break unless chunk
+
       next_token_id = chunk.token_ids[-1]
       output_token_ids << next_token_id
     end

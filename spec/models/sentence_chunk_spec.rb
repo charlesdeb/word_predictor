@@ -15,7 +15,7 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
       allow(SentenceChunk).to receive(:count_chunks)
     end
 
-    it 'converts the text into an array of toekn IDs' do
+    it 'converts the text into an array of token IDs' do
       allow(Token).to receive(:id_ise).and_return([1, 2, 3])
       text_sample = create(:text_sample_three_tokens)
 

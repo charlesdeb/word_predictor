@@ -38,6 +38,21 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
         .with({ text_sample_id: text_sample.id })
     end
 
+    it 'handles strategy as a string' do
+      generate_params =
+        {
+          strategy: 'sentence_chunk',
+          chunk_size: chunk_size,
+          output_size: output_size
+        }
+      allow(SentenceChunk).to receive(:generate).and_return({ output: 'stuff' })
+
+      text_sample.generate generate_params
+
+      expect(SentenceChunk)
+        .to have_received(:generate)
+    end
+
     context 'with word chunk strategy' do
       let(:generate_params) do
         {

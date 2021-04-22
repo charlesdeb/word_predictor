@@ -94,11 +94,17 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
     chunk_size, output_size, text_sample_id = extract_generate_params(params)
 
+    text_sample_length = TextSample.find(text_sample_id).text.length
+
     output = []
 
     if chunk_size == 'all'
       CHUNK_SIZE_RANGE.each do |current_chunk_size|
-        output.push(generate_text(current_chunk_size, output_size, text_sample_id))
+        # handle edge case where text sample is shorter than the chunk size
+        if current_chunk_size <= text_sample_length
+          output.push(generate_text(current_chunk_size, output_size,
+                                    text_sample_id))
+        end
       end
     else
       output.push(generate_text(chunk_size, output_size, text_sample_id))
@@ -132,6 +138,9 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     output = word_chunk.text
     while output.size < output_size
       word_chunk = word_chunk.choose_next_word_chunk
+      # if we couldn't get a next chunk, then just leave it there
+      break unless word_chunk
+
       next_character = word_chunk.text[-1]
       output += next_character
     end

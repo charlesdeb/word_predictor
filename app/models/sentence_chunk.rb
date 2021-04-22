@@ -98,11 +98,18 @@ class SentenceChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
     chunk_size, token_size, text_sample_id = extract_generate_params(params)
 
+    text_sample_text = TextSample.find(text_sample_id).text
+    text_sample_token_length = Token.split_into_tokens(text_sample_text).length
+
     output = []
 
     if chunk_size == 'all'
       CHUNK_SIZE_RANGE.each do |current_chunk_size|
-        output.push(generate_text(current_chunk_size, token_size, text_sample_id))
+        # handle edge case where text sample has less tokens than the chunk size
+        if current_chunk_size <= text_sample_token_length
+          output.push(generate_text(current_chunk_size, token_size,
+                                    text_sample_id))
+        end
       end
     else
       output.push(generate_text(chunk_size, token_size, text_sample_id))

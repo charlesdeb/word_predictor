@@ -38,6 +38,37 @@ RSpec.describe WordChunk, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
+  describe '::reanalyse' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'man on') }
+    let(:relation) { double('relation') }
+
+    before(:each) do
+      text_sample.analyse
+
+      expect(WordChunk.count).to be > 0
+      expect(SentenceChunk.count).to be > 0
+
+      allow(WordChunk).to receive(:where).and_return(relation)
+      allow(relation).to receive(:delete_all)
+      allow(WordChunk).to receive(:analyse)
+    end
+
+    it 'deletes all Word Chunks' do
+      WordChunk.reanalyse(text_sample)
+
+      expect(WordChunk)
+        .to have_received(:where)
+        .with('text_sample_id = ?', text_sample.id)
+      expect(relation).to have_received(:delete_all)
+    end
+
+    it 'calls analyse' do
+      WordChunk.reanalyse(text_sample)
+
+      expect(WordChunk).to have_received(:analyse).with(text_sample)
+    end
+  end
+
   describe '::count_chunks_of_size' do
     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at') }
     let(:chunks_hash) { { 'at' => 1 } }

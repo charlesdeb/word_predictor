@@ -19,6 +19,17 @@ class TextSample < ApplicationRecord
     end
   end
 
+  def reanalyse
+    STRATEGIES.each do |strategy|
+      case strategy
+      when :word_chunk
+        WordChunk.reanalyse self
+      when :sentence_chunk
+        SentenceChunk.reanalyse self
+      end
+    end
+  end
+
   # generate text for the current text sample using the given strategy
   def generate(params = { strategy: :word_chunk })
     # add the current text sample to params

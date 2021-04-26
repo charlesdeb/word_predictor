@@ -85,6 +85,12 @@ class SentenceChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     SentenceChunk.insert_all! import_array
   end
 
+  def self.reanalyse(text_sample)
+    # clear out anything from previous analysis
+    SentenceChunk.where('text_sample_id = ?', text_sample.id).delete_all
+    SentenceChunk.analyse(text_sample)
+  end
+
   # Entry point for generating text using the sentence chunk strategy
   #
   # @param [Hash] params parameters to generate with
@@ -171,7 +177,7 @@ class SentenceChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     candidates[(rand * candidates.size).to_i]
   end
 
-  # Choose the next word chunk after this one
+  # Choose the next chunk after this one
   def choose_next_chunk
     token_ids_where = []
 

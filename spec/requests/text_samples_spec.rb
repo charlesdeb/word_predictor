@@ -197,7 +197,7 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
         allow(text_sample)
           .to receive(:generate).and_return(generation_result)
         get generate_text_sample_url(text_sample), params: {
-          chunk_size: chunk_size, output_size: output_size
+          chunk_size: chunk_size, output_size: output_size, strategy: :word_chunk
         }
       end
 
@@ -206,7 +206,7 @@ RSpec.describe '/text_samples', type: :request do # rubocop:disable Metrics/Bloc
       end
 
       it 'sets a flash message' do
-        expect(flash[:notice]).to eq(generation_result[:message])
+        expect(flash[:warning]).to eq(generation_result[:message])
       end
     end
 

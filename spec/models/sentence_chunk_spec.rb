@@ -63,6 +63,37 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
     end
   end
 
+  describe '::reanalyse' do
+    let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'man on the moon') }
+    let(:relation) { double('relation') }
+
+    before(:each) do
+      text_sample.analyse
+
+      expect(WordChunk.count).to be > 0
+      expect(SentenceChunk.count).to be > 0
+
+      allow(SentenceChunk).to receive(:where).and_return(relation)
+      allow(relation).to receive(:delete_all)
+      allow(SentenceChunk).to receive(:analyse)
+    end
+
+    it 'deletes all Sentence Chunks' do
+      SentenceChunk.reanalyse(text_sample)
+
+      expect(SentenceChunk)
+        .to have_received(:where)
+        .with('text_sample_id = ?', text_sample.id)
+      expect(relation).to have_received(:delete_all)
+    end
+
+    it 'calls analyse' do
+      SentenceChunk.reanalyse(text_sample)
+
+      expect(SentenceChunk).to have_received(:analyse).with(text_sample)
+    end
+  end
+
   describe '::count_chunks' do
     let(:text_sample) { TextSample.create!(description: 'Stuff', text: 'at ') }
     let(:token_ids) { 'array of token ids' } # for example [1,2]
@@ -555,7 +586,7 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
                 sentence_chunk_size: 2 }))
     end
 
-    it 'chooses word chunk from candidates' do
+    it 'chooses sentence chunk from candidates' do
       expect(SentenceChunk)
         .to(
           have_received(:choose_chunk_from_candidates).with(candidates)
@@ -572,14 +603,14 @@ RSpec.describe SentenceChunk, type: :model do # rubocop:disable Metrics/BlockLen
         .to receive(:build_counts_array).and_return(counts_array)
     end
 
-    it 'calculates probabilities of each word chunk' do
+    it 'calculates probabilities of each sentence chunk' do
       SentenceChunk.choose_chunk_from_candidates(candidates)
 
       expect(SentenceChunk)
         .to(have_received(:build_counts_array).with(candidates))
     end
 
-    it 'selects a word chunk' do
+    it 'selects a sentence chunk' do
       new_chunk = SentenceChunk.choose_chunk_from_candidates(candidates)
 
       expect(new_chunk).to be_instance_of(SentenceChunk)

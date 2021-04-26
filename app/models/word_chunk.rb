@@ -86,6 +86,12 @@ class WordChunk < ApplicationRecord # rubocop:disable Metrics/ClassLength
     end
   end
 
+  def self.reanalyse(text_sample)
+    # clear out anything from previous analysis
+    WordChunk.where('text_sample_id = ?', text_sample.id).delete_all
+    WordChunk.analyse(text_sample)
+  end
+
   # Entry point for generating text using the word chunk strategy
   def self.generate(params = {}) # rubocop:disable Metrics/MethodLength
     unless chunks_built_for? params[:text_sample_id]

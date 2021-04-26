@@ -78,7 +78,7 @@ class TextSamplesController < ApplicationController
 
   # PATCH/PUT /text_samples/1/generate
   def reanalyse
-    @text_sample.analyse
+    @text_sample.reanalyse
     flash.now[:notice] = 'Text sample reanalysed successfully'
 
     # TODO: change the form_with in the show so that it submits via AJAX. This

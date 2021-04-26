@@ -23,6 +23,26 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
     end
   end
 
+  describe '#reanalyse' do
+    let(:text_sample) { create(:text_sample) }
+
+    it 'reanalyses SentenceChunk' do
+      allow(SentenceChunk).to receive(:reanalyse)
+
+      text_sample.reanalyse
+
+      expect(SentenceChunk).to have_received(:reanalyse).with(text_sample)
+    end
+
+    it 'reanalyses Word Chunks' do
+      allow(WordChunk).to receive(:reanalyse)
+
+      text_sample.reanalyse
+
+      expect(WordChunk).to have_received(:reanalyse).with(text_sample)
+    end
+  end
+
   describe '#generate' do # rubocop:disable Metrics/BlockLength
     let(:text_sample) do
       TextSample.create!(description: 'Stuff', text: 'another man')

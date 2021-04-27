@@ -55,7 +55,7 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
       text_sample.generate
       expect(WordChunk)
         .to have_received(:generate)
-        .with({ text_sample_id: text_sample.id })
+        .with({ strategy: :word_chunk, text_sample_id: text_sample.id })
     end
 
     it 'handles strategy as a string' do
@@ -94,7 +94,8 @@ RSpec.describe TextSample, type: :model do # rubocop:disable Metrics/BlockLength
           .with({
                   chunk_size: chunk_size,
                   output_size: output_size,
-                  text_sample_id: text_sample.id
+                  text_sample_id: text_sample.id,
+                  strategy: :word_chunk
                 })
       end
 
